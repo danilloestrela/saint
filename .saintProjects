@@ -1,0 +1,11 @@
+#!/bin/bash
+# Checks project folder (if exists) and source it.
+projectSources=()
+
+for project in "${projects[@]}"; do
+  projectSources+=( "${projectPath}/${projectsDir}/${project}/.${project}" ) 
+done
+
+for source in "${projectSources[@]}"; do
+  source "$source"
+done

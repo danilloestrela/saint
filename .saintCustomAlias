@@ -1,0 +1,6 @@
+#!/bin/bash
+# You should use this file to create alias not directly related to your projects
+# Saint Custom Alias
+
+alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+alias dfrm='docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q) && docker rmi $(docker images -a -q) && docker system prune -a --volumes'

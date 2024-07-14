@@ -1,0 +1,57 @@
+#!/bin/bash
+# saint Commands
+# TODO: Let the user choose what he wants, automatically install everything(git clone projects), or manually (choose the path before clonning each) 
+# It is absolutely forbidden to change "BRAINILLO_FIRST_EXECUTION" variable name.
+BRAINILLO_FIRST_EXECUTION=true
+PROJECT_PATH=$(dirname "$0")
+
+if [ -s "$PROJECT_PATH/.env" ]; then
+  export $(egrep -v '^#' ${PROJECT_PATH}/.env | xargs) > /dev/null
+fi
+
+saint () {
+
+  #Config
+  local projectPath=${PROJECT_PATH}
+  local projectCommand=$0
+  
+  # Other projects variables required
+  source $projectPath/.saintVariables
+
+  # Required: Helpers
+  source $projectPath/.saintHelpers
+
+  # Loading Projects
+  source $projectPath/.saintProjects
+  
+  # Required: Methods
+  source $projectPath/.saintMethods
+
+  if test "${BRAINILLO_FIRST_EXECUTION}" = "false"; then 
+    # Initialize the .saintMainCommands if it doesn't exist
+    if [ ! -f $SAINT_METHODS_MAIN_COMMANDS_FILE ]; then
+      saint_initialize_main_commands && source $SAINT_METHODS_MAIN_COMMANDS_FILE \
+      || saint_msg "${RED}FATAL ERROR${NC} :: Can't load anything."
+    else
+      source $SAINT_METHODS_MAIN_COMMANDS_FILE || saint_msg "${RED}FATAL ERROR${NC} :: Main commands file may be wrong..."
+    fi;
+
+  fi;
+
+  # check first Execution - Because it will first load the function, then it'll load saint to check if it is really loaded.
+  if test "${BRAINILLO_FIRST_EXECUTION}" = "true"; then
+    # we need to check when openning saint if everything is set and ready.
+    if [ ! -f $SAINT_METHODS_MAIN_COMMANDS_FILE ]; then
+      saint_initialize_main_commands && source $SAINT_METHODS_MAIN_COMMANDS_FILE \
+      || saint_msg "${RED}FATAL ERROR${NC} :: Can't load anything."
+      echo -e "Made the first setup and ${projectName} is ${GREEN}running${NC} 🤖"
+      BRAINILLO_FIRST_EXECUTION=false
+    else
+      echo -e "${projectName} is ${GREEN}running${NC} 🤖"
+      BRAINILLO_FIRST_EXECUTION=false
+    fi;
+  fi
+  
+};
+
+saint

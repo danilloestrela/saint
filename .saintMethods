@@ -1,0 +1,486 @@
+#!/bin/bash
+#Templates for creating new projects
+
+saint_add_new_project() {
+  saint_msg "Hey, lets start to ${GREEN}install a new project${NC}!"
+  read "newProjName?Enter new project name: "
+  read "newProjectPath?Enter the path for ${newProjName} (default: ~/${newProjName}): "
+  # Checking with the user if he wants to create a custom alias for CLI
+  read "aliasNameChoice?Please, type the name of the alias you want to set up for  ${newProjName} (default: ${newProjName}Cmd): "
+
+  # Check if newProjName is empty
+  if [ -z "$newProjName" ]; then
+    saint_msg "${RED}No project name entered. Exiting.${NC}"
+    return  # or 'exit' if you want to completely exit the script
+  fi
+
+  pDir="${PROJECT_PATH}/projects/${newProjName}"
+
+  mkdir -p "$pDir"
+
+  saint_create_projectName_template ${newProjName} && \
+  saint_create_project_variables_template ${newProjName} ${newProjectPath} && \
+  saint_create_project_alias_template ${newProjName} ${aliasNameChoice} && \
+  saint_create_project_mainCommands_template ${newProjName} || \
+  saint_msg "${RED}ERROR${NC} :: Something went wrong while creating the project template or help" && return 1
+  # Add more variables as needed, following the pattern above
+
+  saint_msg "${GREEN}Project \"${newProjName}\" created successfully with standard file structure.${NC}"
+  
+  # Add the new project command to the .saintMainCommands file
+  if saint_validate_project_files "$project_dir" "$project_name"; then
+      saint_add_command "$newProjName"
+      echo "${newProjName}_help" >> $SAINT_METHODS_MAIN_HELP_FILE
+    fi  
+
+  saint_msg "${GREEN}Project "${newProjName}" added to main commands and help successfully.${NC} Reloading saint..."
+  source ${PROJECT_PATH}/.saint
+}
+
+
+saint_delete_project() {
+  saint_msg "Hey, I think you're willing to ${RED}delete${NC} one of your projects... So:"
+  read "deleteProjectName?Type the NAME of the project you want to delete: "
+  pDir="${PROJECT_PATH}/projects/${deleteProjectName}" 
+
+  # Checks if the directory exists
+  if [ -d "$pDir" ]; then
+    # Removes the folder from your project and its files
+    rm -r "$pDir"
+    saint_msg "${GREEN}${deleteProjectName} project ${RED}deleted${GREEN} successfully.${NC}"
+
+    # Remove the project entry from the .saintMainCommands file
+    sed -i "/${deleteProjectName}) ${deleteProjectName}_main_commands/d" "${PROJECT_PATH}/.saintMainCommands"
+    
+    # Remove the project entry from the .saintHelpCommands file
+    sed -i "/${deleteProjectName}_help/d" "${PROJECT_PATH}/.saintHelpCommands"
+
+    rebuild_saint_help
+    saint_msg "Case of the ${deleteProjectName} project removed from main commands and help. Reloading saint..."
+    source ${PROJECT_PATH}/.saint
+  else
+    saint_msg "${deleteProjectName} does not exist."
+  fi
+}
+
+
+saint_create_projectName_template() {
+  newProjName=$1
+  pDir="${PROJECT_PATH}/projects/${newProjName}"
+  fileNameWithPath="${pDir}/.${newProjName}"
+  local projNameUppercased=$(echo "$projectName" | tr '[:lower:]' '[:upper:]')
+  saint_msg "Creating ${GREEN}.${newProjName}${NC} file template..."
+
+  # Setting up the .[projectName] file with it's template methods
+  echo "#!/bin/bash"                                                                                                         > "${fileNameWithPath}"
+  echo "# depends on .saint / .saintHelpers"                                                                                >> "${fileNameWithPath}"
+  echo "# Specific functions for ${newProjName}"                                                                            >> "${fileNameWithPath}"
+
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "# Getting current folder"                                                                                           >> "${fileNameWithPath}"
+  echo "thisLocation=\$(dirname "\$0")"                                                                                     >> "${fileNameWithPath}"
+  # Template of help
+  echo "${projNameUppercased}_HELP_FILE=\"\${thisLocation}/.help_descriptions\""                                            >> "${fileNameWithPath}"
+  echo "${projNameUppercased}_SCRIPT_FILE=\"\${thisLocation}/\$(basename \"\$0\")\""                                        >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "# \"help\" is a very common function you may want to add to remember the commands you have."                        >> "${fileNameWithPath}"
+  echo "# Initialize the help file if it doesn't exist"                                                                     >> "${fileNameWithPath}"
+  echo "initialize_help_file() {"                                                                                           >> "${fileNameWithPath}"
+  echo "    if [ ! -f \"\$${projNameUppercased}_HELP_FILE\" ]; then"                                                                              >> "${fileNameWithPath}"
+  echo "        saint_msg \"Creating help file at \${${projNameUppercased}_HELP_FILE}\""                                                          >> "${fileNameWithPath}"
+  echo "        touch \"\$${projNameUppercased}_HELP_FILE\" || { saint_msg \"Failed to create help file at \${${projNameUppercased}_HELP_FILE}\"; exit 1; }"            >> "${fileNameWithPath}"
+  echo "    else"                                                                                                           >> "${fileNameWithPath}"
+  echo "        saint_msg \"Help file already exists at \${${projNameUppercased}_HELP_FILE}\""                                                    >> "${fileNameWithPath}"
+  echo "    fi"                                                                                                             >> "${fileNameWithPath}"
+  echo "}"                                                                                                                  >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "# Function to add help description"                                                                                 >> "${fileNameWithPath}"
+  echo "${newProjName}_add_help() {"                                                                                        >> "${fileNameWithPath}"
+  echo "    group=\$1"                                                                                                      >> "${fileNameWithPath}"
+  echo "    command=\$2"                                                                                                    >> "${fileNameWithPath}"
+  echo "    description=\$3"                                                                                                >> "${fileNameWithPath}"
+  echo "    saint_msg \"Adding help description: \$group | \$command: \$description\""                                      >> "${fileNameWithPath}"
+  echo "    echo \"\$group:\$command:\$description\" >> \"\$${projNameUppercased}_HELP_FILE\""                                                    >> "${fileNameWithPath}"
+  echo "}"                                                                                                                  >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "# Function to update help by parsing comments"                                                                      >> "${fileNameWithPath}"
+  echo "${newProjName}_update_help() {"                                                                                     >> "${fileNameWithPath}"
+  echo "    initialize_help_file"                                                                                           >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "    saint_msg \"[...] \${GREEN}HELP UPDATE\${NC} :: Clearing help file at \$${projNameUppercased}_HELP_FILE\""                            >> "${fileNameWithPath}"
+  echo "    : > \"\$${projNameUppercased}_HELP_FILE\" # Clear existing help file"                                                                 >> "${fileNameWithPath}"
+  echo "    if [ \$? -ne 0 ]; then"                                                                                         >> "${fileNameWithPath}"
+  echo "        saint_msg \"Failed to clear help file at \$${projNameUppercased}_HELP_FILE\""                                                     >> "${fileNameWithPath}"
+  echo "        exit 1"                                                                                                     >> "${fileNameWithPath}"
+  echo "    fi"                                                                                                             >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "    saint_msg \"[...] \${GREEN}HELP UPDATE\${NC} :: Starting to parse functions\""                                  >> "${fileNameWithPath}"
+  echo "    saint_msg \"SCRIPT_FILE: \$${projNameUppercased}_SCRIPT_FILE\""                                                                       >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "    if [ ! -f \"\$${projNameUppercased}_SCRIPT_FILE\" ]; then"                                                                            >> "${fileNameWithPath}"
+  echo "        saint_msg \"Script file does not exist: \$${projNameUppercased}_SCRIPT_FILE\""                                                    >> "${fileNameWithPath}"
+  echo "        exit 1"                                                                                                     >> "${fileNameWithPath}"
+  echo "    fi"                                                                                                             >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "    # Functions to parse"                                                                                           >> "${fileNameWithPath}"
+  echo "    functions=(\"${newProjName}_run\" \"${newProjName}_install\" \"${newProjName}_code\" \"${newProjName}_goto\")"  >> "${fileNameWithPath}"
+  echo "    capturing=false"                                                                                                >> "${fileNameWithPath}"
+  echo "    current_function=\"\""                                                                                          >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "    while IFS= read -r line; do"                                                                                    >> "${fileNameWithPath}"
+  echo "        # saint_msg \"Reading line: \$line\""                                                                       >> "${fileNameWithPath}"
+  echo "        # Check for function definition"                                                                            >> "${fileNameWithPath}"
+  echo "        if [[ \$line =~ ^[a-zA-Z_][a-zA-Z0-9_]*\\(\\)\ \\{ ]]; then"                                                >> "${fileNameWithPath}"
+  echo "            function_name=\$(echo \$line | cut -d '(' -f 1)"                                                        >> "${fileNameWithPath}"
+  echo "            saint_msg \"Found function definition: \$function_name\""                                               >> "${fileNameWithPath}"
+  echo "            if [[ \" \${functions[*]} \" == *\" \$function_name \"* ]]; then"                                       >> "${fileNameWithPath}"
+  echo "                current_function=\$function_name"                                                                   >> "${fileNameWithPath}"
+  echo "                capturing=true"                                                                                     >> "${fileNameWithPath}"
+  echo "                saint_msg \"[...] \${GREEN}HELP UPDATE\${NC} :: Capturing help comments for function: \$current_function\"" >> "${fileNameWithPath}"
+  echo "            else"                                                                                                   >> "${fileNameWithPath}"
+  echo "                capturing=false"                                                                                    >> "${fileNameWithPath}"
+  echo "            fi"                                                                                                     >> "${fileNameWithPath}"
+  echo "        elif \$capturing && [[ \$line =~ ^[[:space:]]*#@help ]]; then"                                              >> "${fileNameWithPath}"
+  echo "            saint_msg \"[...] \${GREEN}HELP UPDATE\${NC} :: Found help comment in \$current_function\""             >> "${fileNameWithPath}"
+  echo "            comment=\${line#*#@help }"                                                                              >> "${fileNameWithPath}"
+  echo "            if [[ \$comment == *!* ]]; then"                                                                        >> "${fileNameWithPath}"
+  echo "                group=\${comment%%!*}"                                                                              >> "${fileNameWithPath}"
+  echo "                rest=\${comment#*!}"                                                                                >> "${fileNameWithPath}"
+  echo "                command=\${rest%%:*}"                                                                               >> "${fileNameWithPath}"
+  echo "                description=\${rest#*: }"                                                                           >> "${fileNameWithPath}"
+  echo "            else"                                                                                                   >> "${fileNameWithPath}"
+  echo "                group=\"General\""                                                                                  >> "${fileNameWithPath}"
+  echo "                command=\${comment%%:*}"                                                                            >> "${fileNameWithPath}"
+  echo "                description=\${comment#*: }"                                                                        >> "${fileNameWithPath}"
+  echo "            fi"                                                                                                     >> "${fileNameWithPath}"
+  echo "            saint_msg \"Processing help comment: group='\$group', command='\$command', description='\$description'\"" >> "${fileNameWithPath}"
+  echo "            ${newProjName}_add_help \"\$group\" \"\$command\" \"\$description\""                                    >> "${fileNameWithPath}"
+  echo "        fi"                                                                                                         >> "${fileNameWithPath}"
+  echo "    done < \"\$${projNameUppercased}_SCRIPT_FILE\""                                                                                       >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "    if [ \$? -ne 0 ]; then"                                                                                         >> "${fileNameWithPath}"
+  echo "        saint_msg \"Failed to read script file at \$${projNameUppercased}_SCRIPT_FILE\""                                                  >> "${fileNameWithPath}"
+  echo "        exit 1"                                                                                                     >> "${fileNameWithPath}"
+  echo "    fi"                                                                                                             >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "    saint_msg \"\${GREEN}HELP UPDATE\${NC} :: Help Updated!\""                                                      >> "${fileNameWithPath}"
+  echo "}"                                                                                                                  >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+  echo "# Function to show help"                                                                                            >> "${fileNameWithPath}"
+  echo "${newProjName}_help() {"                                                                                            >> "${fileNameWithPath}"
+  echo "    local max_default_command_length=15"                                                                            >> "${fileNameWithPath}"
+  echo "    local max_command_length=0"                                                                                     >> "${fileNameWithPath}"
+  echo "    local padding=2"                                                                                                >> "${fileNameWithPath}"
+  echo "    local current_group=\"\""                                                                                       >> "${fileNameWithPath}"
+  echo "    if [ -f \$${projNameUppercased}_HELP_FILE ]; then"                                                              >> "${fileNameWithPath}"
+  echo "        # Calculate the maximum length of the commands for alignment"                                               >> "${fileNameWithPath}"
+  echo "        while IFS=: read -r group command description; do"                                                          >> "${fileNameWithPath}"
+  echo "            command_length=\${#command}"                                                                            >> "${fileNameWithPath}"
+  echo "            if (( command_length > max_command_length )); then"                                                     >> "${fileNameWithPath}"
+  echo "                max_command_length=\$command_length"                                                                >> "${fileNameWithPath}"
+  echo "            fi"                                                                                                     >> "${fileNameWithPath}"
+  echo "        done < \"\$${projNameUppercased}_HELP_FILE\""                                                               >> "${fileNameWithPath}"
+  echo "    fi"                                                                                                             >> "${fileNameWithPath}"
+  echo "    # Print the help header"                                                                                        >> "${fileNameWithPath}"
+  echo "    printf \"\${GREEN}%-*s\${NC}%*s%s\n\" \$max_default_command_length \"${newProjName}\" \$padding \"Available commands for ${newProjName}.\" \"\$description\"" >> "${fileNameWithPath}"
+  echo "    printf \"   |- \${YELLOW}%-*s\${NC}%*s%s\n\" \$max_default_command_length \"help\" \$padding \"Shows help commands for ${newProjName}\" \"\$description\"" >> "${fileNameWithPath}"
+  echo "    printf \"   |- \${YELLOW}%-*s\${NC}%*s%s\n\" \$max_default_command_length \"update-help\" \$padding \"Manually updates help commands (from comments)\" \"\$description\"" >> "${fileNameWithPath}"
+  echo "    # Print the commands and descriptions aligned and grouped"                                                      >> "${fileNameWithPath}"
+  echo "    if [ -f \$${projNameUppercased}_HELP_FILE ]; then"                                                              >> "${fileNameWithPath}"
+  echo "        while IFS=: read -r group command description; do"                                                          >> "${fileNameWithPath}"
+  echo "            if [[ \"\$group\" != \"\$current_group\" ]]; then"                                                      >> "${fileNameWithPath}"
+  echo "                echo -e \"   \${GREEN}\${group}\${NC}\""                                                            >> "${fileNameWithPath}"
+  echo "                current_group=\$group"                                                                              >> "${fileNameWithPath}"
+  echo "            fi"                                                                                                     >> "${fileNameWithPath}"
+  echo "            printf \"     |- \${YELLOW}%-*s\${NC}%*s%s\n\" \$max_command_length \"\$command\" \$padding \"\" \"\$description\"" >> "${fileNameWithPath}"
+  echo "        done < \"\$${projNameUppercased}_HELP_FILE\""                                                               >> "${fileNameWithPath}"
+  echo "    else"                                                                                                           >> "${fileNameWithPath}"
+  echo "        saint_msg \"No help file yet. You can start by running the command update-help\""                           >> "${fileNameWithPath}"
+  echo "        saint_msg \"To make a new help command on your saint project folder you can:\""                             >> "${fileNameWithPath}"
+  echo "        echo -e \"Add a comment like the following: \${YELLOW}'#@help nameOfGroup!nameOfCommand: Description'\${NC}\"" >> "${fileNameWithPath}"
+  echo "        echo -e \"If you don't add \${YELLOW}'nameOfGroup!'\${NC} then it'll add to a group called \${YELLOW}'General'\${NC}\"" >> "${fileNameWithPath}"
+  echo "        echo -e \"\${RED}WARNING: This will only be added through some functions. Check your project folder for more.\${NC}\"" >> "${fileNameWithPath}"
+  echo "    fi"                                                                                                             >> "${fileNameWithPath}"
+  echo "}"                                                                                                                  >> "${fileNameWithPath}"
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+
+  echo ""                                                                                                                   >> "${fileNameWithPath}"
+
+
+  echo ""                                                                                                             >> "${fileNameWithPath}"
+  # Template of run
+  echo "# \"install\" is usually used to install some project on your side. I use it mainly for js projects,"                 >> "${fileNameWithPath}"
+  echo "# but you can addapt it for the one of your choice (go, rust, php, etc)"                                      >> "${fileNameWithPath}"
+  echo "${newProjName}_install() {"                                                                                       >> "${fileNameWithPath}"
+  echo "    lastCommand=\$1"                                                                                          >> "${fileNameWithPath}"
+  echo "    case \$2 in"                                                                                              >> "${fileNameWithPath}"
+  echo "        # Add cases here"                                                                                     >> "${fileNameWithPath}"
+  echo "        # Ex: site) ${newProjName}_goto \${lastCommand} \${${newProjName}SitePath} && npm i || cd - ;;"                 >> "${fileNameWithPath}"
+  echo "        \"\") saint_empty \$lastCommand;;"                                                                    >> "${fileNameWithPath}"
+  echo "        *) saint_invalid_command \$lastCommand \$newProjName;;"                                               >> "${fileNameWithPath}"
+  echo "    esac"                                                                                                     >> "${fileNameWithPath}"
+  echo "}"                                                                                                            >> "${fileNameWithPath}"
+  
+  echo ""                                                                                                             >> "${fileNameWithPath}"
+  # Template of run
+  echo "# \"run\" is usually used to run some project on your side. I use it mainly for js projects,"                 >> "${fileNameWithPath}"
+  echo "# but you can addapt it for the one of your choice (go, rust, php, etc)"                                      >> "${fileNameWithPath}"
+  echo "${newProjName}_run() {"                                                                                       >> "${fileNameWithPath}"
+  echo "    lastCommand=\$1"                                                                                          >> "${fileNameWithPath}"
+  echo "    case \$2 in"                                                                                              >> "${fileNameWithPath}"
+  echo "        # Add cases here"                                                                                     >> "${fileNameWithPath}"
+  echo "        # Ex: site) ${newProjName}_goto \${lastCommand} \${${newProjName}SitePath} && npm run dev || cd - ;;"                 >> "${fileNameWithPath}"
+  echo "        \"\") saint_empty \$lastCommand;;"                                                                    >> "${fileNameWithPath}"
+  echo "        *) saint_invalid_command \$lastCommand \$newProjName;;"                                               >> "${fileNameWithPath}"
+  echo "    esac"                                                                                                     >> "${fileNameWithPath}"
+  echo "}"                                                                                                            >> "${fileNameWithPath}"
+
+  echo ""                                                                                                             >> "${fileNameWithPath}"
+  # Template of code
+  echo "# \"code\" function is usually used to open your project on visual code. you can addapt it to your own IDE"   >> "${fileNameWithPath}"
+  echo "${newProjName}_code() {"                                                                                      >> "${fileNameWithPath}"
+  echo "    lastCommand=\$1"                                                                                          >> "${fileNameWithPath}"
+  echo "    newProjName=\$2"                                                                                          >> "${fileNameWithPath}"
+  echo "    case \$newProjName in"                                                                                    >> "${fileNameWithPath}"
+  echo "        # Add cases here"                                                                                     >> "${fileNameWithPath}"
+  echo "        # Ex: site) saint_cd_open_code \${${newProjName}SitePath} || cd - ;;"                                            >> "${fileNameWithPath}"
+  echo "        \"\") saint_empty \$lastCommand;;"                                                                    >> "${fileNameWithPath}"
+  echo "        *) saint_invalid_command \$lastCommand \$newProjName;;"                                               >> "${fileNameWithPath}"
+  echo "    esac"                                                                                                     >> "${fileNameWithPath}"
+  echo "}"                                                                                                            >> "${fileNameWithPath}"
+
+  echo ""                                                                                                             >> "${fileNameWithPath}"
+  # Template of goto
+  echo "${newProjName}_goto() {"                                                                                      >> "${fileNameWithPath}"
+  echo "    lastCommand=\$1"                                                                                          >> "${fileNameWithPath}"
+  echo "    newProjName=\$2"                                                                                          >> "${fileNameWithPath}"
+  echo "    case \$newProjName in"                                                                                    >> "${fileNameWithPath}"
+  echo "        # Add cases here"                                                                                     >> "${fileNameWithPath}"
+  echo "        # Ex: site) saint_cd \${${newProjName}SitePath} || cd - ;;"                                            >> "${fileNameWithPath}"
+  echo "        \"\") saint_empty \$lastCommand;;"                                                                    >> "${fileNameWithPath}"
+  echo "        *) saint_invalid_command \$lastCommand \$newProjName;;"                                               >> "${fileNameWithPath}"
+  echo "    esac"                                                                                                     >> "${fileNameWithPath}"
+  echo "}"                                                                                                            >> "${fileNameWithPath}"
+
+  echo ""                                                                                                             >> "${fileNameWithPath}"
+  echo ""                                                                                                             >> "${fileNameWithPath}"
+  echo "# Loading Main Commands"                                                                                      >> "${fileNameWithPath}"
+  echo "source \${thisLocation}/.mainCommands"                                                                        >> "${fileNameWithPath}"
+  echo "# Loading Alias"                                                                                              >> "${fileNameWithPath}"
+  echo "source \${thisLocation}/.alias"                                                                               >> "${fileNameWithPath}"
+
+  saint_msg "File ${GREEN}.${newProjName} created successfuly.${NC}"
+  echo ""
+}
+
+#.variables template
+saint_create_project_variables_template() {
+  newProjName=$1
+  projPathProp=$2
+  newProjPath=${${projPathProp}:-~/${newProjName}}
+
+  pDir="${PROJECT_PATH}/projects/${newProjName}"
+  newProjVarDir="${pDir}/.variables"
+  saint_msg "Creating ${YELLOW}${newProjName}${NC} ${GREEN}.variables${NC} file template..."
+  echo "#!/bin/bash"                                            > "${newProjVarDir}"
+  echo "# Specific variables to ${newProjName}"                >> "${newProjVarDir}"
+  echo "# Here you can define env variables and other configs" >> "${newProjVarDir}"
+  echo ""                                                      >> "${newProjVarDir}"
+  echo "local ${newProjName}Path=${newProjPath}"               >> "${newProjVarDir}"
+
+  saint_msg ".variables file successfully created!"
+  echo ""
+}
+
+#.alias template
+saint_create_project_alias_template() {
+  newProjName=$1
+  aliasNameProp=$2
+  pDir="${PROJECT_PATH}/projects/${newProjName}"
+  aliasName=${${aliasNameProp}:-${newProjName}Cmd}  #sets up a pattern one only if the comand is empty
+  saint_msg "Creating ${YELLOW}${newProjName}${NC} .alias file template..."
+
+  # Setting up .alias file
+  echo "#!/bin/bash" > "${pDir}/.alias"
+  echo "# Alias for ${newProjName}" >> "${pDir}/.alias"
+  echo "alias ${aliasName}='saint ${newProjName}'" >> "${pDir}/.alias"
+
+  saint_msg ".alias file successfully created"
+  echo ""
+}
+
+#.mainCommands template
+saint_create_project_mainCommands_template() {
+  newProjName=$1
+  pDir="${PROJECT_PATH}/projects/${newProjName}"
+  saint_msg "Creating ${YELLOW}${newProjName}${NC} .mainCommands file template..."
+
+  # Setting up .mainCommands file
+  echo "#!/bin/bash" > "${pDir}/.mainCommands"
+  echo "# Main commands for ${newProjName}" >> "${pDir}/.mainCommands"
+  echo "${newProjName}_main_commands() {" >> "${pDir}/.mainCommands"
+  echo "  lastCompleteCommand=\"\$1 \$2\"" >> "${pDir}/.mainCommands"
+
+  echo "  case \$2 in" >> "${pDir}/.mainCommands"
+  echo "    code) ${newProjName}_code \${lastCompleteCommand} \${@:3};;"  >> "${pDir}/.mainCommands"
+  echo "    goto) ${newProjName}_goto \${lastCompleteCommand} \${@:3};;"  >> "${pDir}/.mainCommands"
+  echo "    help) ${newProjName}_help;;"  >> "${pDir}/.mainCommands" 
+  echo "    update-help) ${newProjName}_update_help;;"  >> "${pDir}/.mainCommands"
+  echo "    install) ${newProjName}_install  \${lastCompleteCommand} \${@:3};;"  >> "${pDir}/.mainCommands"
+  echo "    run) ${newProjName}_run  \${lastCompleteCommand} \${@:3};;"  >> "${pDir}/.mainCommands"
+  echo "    \"\") saint_empty \${lastCompleteCommand};;"  >> "${pDir}/.mainCommands"
+  echo "    *) saint_invalid_command \$1 \$2;;"  >> "${pDir}/.mainCommands"
+  echo "  esac"  >> "${pDir}/.mainCommands"
+  
+  echo "}" >> "${pDir}/.mainCommands"
+
+  saint_msg ".mainCommands successfully created"
+  echo ""
+}
+
+# BEGIN saint_help
+saint_help() {
+  # Display Help
+  echo -e "${GREEN}Commands available for this script:${NC}"
+  echo -e ""
+  echo -e "${YELLOW}Intrinsic commands:${NC}"
+  saint_print_help "add" "Add a new project"
+  saint_print_help "delete" "Delete an existing project"
+  saint_print_help "edit" "Edit the Saint script"
+  saint_print_help "list" "List all projects"
+  saint_print_help "help" "Show this help message"
+  saint_print_help "update-commands" "Update project commands"
+  echo -e ""
+  echo -e "${YELLOW}Project-specific commands:${NC}"
+  if [ -s $SAINT_METHODS_MAIN_HELP_FILE ]; then
+    while read -r line; do
+      eval "$line"
+    done < $SAINT_METHODS_MAIN_HELP_FILE
+  else
+    echo -e "No project help commands available."
+  fi
+}
+# END saint_help
+
+rebuild_saint_help() {
+  saint_msg "${YELLOW}Rebuilding${NC} saint help method..."
+
+  # Path to the .saintHelpCommands file
+  local helpFile=$SAINT_METHODS_MAIN_HELP_FILE
+  
+  # Clear the existing .saintHelpCommands file
+  : > "$helpFile"
+
+  # Add help commands for existing projects
+  for project in "${PROJECT_PATH}/projects/"*; do
+      projName=$(basename "$project")
+      # Check if the project has a help function and add it
+      if [ -f "${PROJECT_PATH}/projects/${projName}/.${projName}" ]; then
+          echo "${projName}_help" >> "$helpFile"
+      fi
+  done
+
+  saint_msg "${YELLOW}saint_help${NC} commands updated successfully in ${helpFile}."
+}
+
+# Returns the list of current projects
+saint_project_list() {
+  # Count the number of projects
+  local projectCount=0
+  local projects=("${PROJECT_PATH}/projects/"*)
+
+  for project in "${projects[@]}"; do
+    if [ -f "${project}/.${projName}" ]; then
+      let projectCount+=1
+    fi
+  done
+
+  # Display message based on the number of projects
+  if [ "$projectCount" -eq 1 ]; then
+    saint_msg "This is the project you have now:"
+  else
+    saint_msg "These are the projects you have now:"
+  fi
+
+  # ${newProjName} over existing projects and list them
+  for project in "${projects[@]}"; do
+    projName=$(basename "$project")
+    if [ -f "${project}/.${projName}" ]; then
+      echo "${projName}"
+    fi
+  done
+}
+
+saint_add_command() {
+  local project_name=$1
+  local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\$0 \$1\" \${@:2};;"
+  if ! grep -q "${command}" $SAINT_METHODS_MAIN_COMMANDS_FILE; then
+    sed -i "/#BEGIN-MAINCOMMANDS/a ${command}" $SAINT_METHODS_MAIN_COMMANDS_FILE
+  fi
+}
+
+saint_remove_command() {
+  local project_name=$1
+  local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\$0 \$1\" \${@:2};;"
+  sed -i "\|${command}|d" $SAINT_METHODS_MAIN_HELP_FILE
+}
+
+
+saint_validate_project_files() {
+  local project_dir=$1
+  local project_name=$2
+  local mandatory_files=(".alias" ".${project_name}" ".mainCommands" ".variables")
+
+  for file in "${mandatory_files[@]}"; do
+    if [ ! -f "${project_dir}/${file}" ]; then
+      echo "${RED}Error:${NC} Missing mandatory file ${file} in project ${project_name}."
+      return 1
+    fi
+  done
+  return 0
+}
+
+saint_load_project_commands() {
+  local project_name
+  for project_dir in "${PROJECT_PATH}/projects/"*; do
+    project_name=$(basename "$project_dir")
+    if saint_validate_project_files "$project_dir" "$project_name"; then
+      saint_add_command "$project_name"
+    fi
+  done
+}
+
+saint_update_project_commands() {
+  # Clear commands between BEGIN and END
+  sed -i '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' $SAINT_METHODS_MAIN_COMMANDS_FILE
+
+  saint_load_project_commands
+  saint_msg "${GREEN}Project commands updated successfully.${NC}"
+}
+
+saint_initialize_main_commands() {
+  if [ ! -d "${PROJECT_PATH}/saint_temp" ]; then
+    mkdir "${PROJECT_PATH}/saint_temp"
+  fi;
+  if [ ! -f $SAINT_METHODS_MAIN_COMMANDS_FILE ]; then
+    cat <<EOL > $SAINT_METHODS_MAIN_COMMANDS_FILE
+    case \$1 in
+        add) saint_add_new_project ;;
+        delete) saint_delete_project ;;
+        edit) code \$projectPath;;
+        list) saint_project_list ;;
+        help) saint_help ;;
+        update-commands) saint_update_project_commands ;;
+        #BEGIN-MAINCOMMANDS
+        #END-MAINCOMMANDS
+        "") saint_empty "\\"\\"" ;;
+        *) saint_invalid_command "saint" $1 ;;
+    esac 
+EOL
+    saint_update_project_commands && rebuild_saint_help || return 1
+  else
+    return 1
+  fi
+}
+
+

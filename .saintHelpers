@@ -1,0 +1,180 @@
+#!/bin/bash
+# depends on .saint
+# Saint Helper Functions
+# TODO: Create a reload for docker custom containers update
+# TODO: No messages or just important messages mode to activate or disable
+saint_msg() {
+    msg=$1
+    echo -e "🤖 ${msg}"
+}
+
+saint_empty() {
+    emptyCommand=$1
+    saint_msg "${RED}$emptyCommand${NC} :: Command is empty. Try '${projectCommand} ${GREEN}help${NC}'"
+};
+
+# Function to check if Docker is running
+saint_check_docker() {
+  if ! docker info > /dev/null 2>&1; then
+    saint_msg "${RED}ERROR${NC} :: Docker is ${RED}not running${NC}. Please ${YELLOW}start Docker${NC} and try again."
+    return 1
+  else
+    echo "Docker is running."
+  fi
+}
+
+saint_docker() {
+    dockerFolder=$1
+    dockerCommands=${2:@}
+    if ls $dockerFolder; then
+        saint_msg "I'll try to ${GREEN}run${NC} docker commands on path '${YELLOW}${dockerFolder}${NC}'..."
+        cd $dockerFolder && docker-compose ${dockerCommands} &&
+        cd - || cd -
+    else
+        saint_msg "${RED}$dockerFolder${NC} :: his path does not exist or there was an error."
+    fi
+};
+
+saint_docker_up() {
+    dockerName=$1
+    dockerDir=$2
+    if ls $dockerDir; then
+        saint_msg "I'll try to ${GREEN}turn on${NC} project ${GREEN}${dockerName}${NC} on path '${YELLOW}${dockerDir}${NC}' using docker-compose..."
+        cd $dockerDir && docker-compose up -d --force-recreate &&
+        cd - || cd -
+    else
+        saint_msg "${RED}$dockerDir${NC} :: his path does not exist or there was an error."
+    fi
+};
+
+saint_docker_down() {
+    dockerName=$1
+    dockerDir=$2
+    if ls $dockerDir; then
+        saint_msg "I'll try to ${RED}turn off${NC} project ${GREEN}${dockerName}${NC} on path '${YELLOW}${dockerDir}${NC}' using docker-compose..."
+        cd $dockerDir && docker-compose down &&
+        cd - || cd -
+    else
+        saint_msg "${RED}$dockerDir${NC} :: his path does not exist or there was an error."
+    fi
+};
+
+saint_docker_open_container() {
+    dockerDir=$1
+    dockerContainerName=$2
+    dockerCommands=$3
+
+    cd $dockerDir && docker-compose exec $dockerContainerName $dockerCommands /bin/bash &&
+    cd - || cd -
+}
+
+saint_cd () {
+    directoryPath=$1
+    if ls $directoryPath; then
+        saint_msg "You're now on ${GREEN}$directoryPath${NC} 😁"
+        cd $directoryPath || return
+    else
+        saint_msg "${RED}$directoryPath${NC} :: This path does not exist or there was an error."
+    fi
+};
+
+saint_cd_open_code () {
+    directoryPath=$1
+    if ls $directoryPath; then
+        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' into Visual Code for you 🤫."
+        cd $directoryPath && code . &&
+        cd - || cd - 
+    fi
+};
+
+saint_cd_open_pstorm_windows() {
+  directoryPath=$1
+    if ls $directoryPath; then
+        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' into PhpStorm for you 🤫."
+        cd $directoryPath && pstorm . &&
+        cd - || cd - 
+    fi
+}
+
+saint_invalid_command () {
+    parentCommand=$1
+    invalidCommand=$2
+    saint_msg "'${RED}$invalidCommand${NC}' :: Not a valid command in '$parentCommand'."
+};
+
+# Maybe this is unecessary, I'm still testing. Idk, you tell me.
+# Function to run the command and return to the original directory if it fails
+saint_run_command() {
+  local orig_dir=$(pwd)
+  local command="$1"
+  shift
+  local args="$@"
+  
+  eval "$command $args"
+  if [ $? -ne 0 ]; then
+    saint_msg "${RED}Command failed${NC} :: $command $args"
+    cd "$orig_dir"
+    return 1
+  fi
+  cd "$orig_dir"
+}
+
+saint_print_help() {
+    local command=$1
+    local description=$2
+    local command_color=${3:-$GREEN}  # Default color for command is GREEN
+    local description_color=${4:-$YELLOW}  # Default color for description is YELLOW
+    local max_command_length=${5:-20}  # Default maximum command length is 20
+
+    printf "${command_color}%-${max_command_length}s${NC} - ${description_color}%s${NC}\n" "${command}" "${description}"
+}
+
+saint_draw_menu() {
+  local options=("$@")
+  local selected=$1
+  echo "Use the arrow keys to navigate and Enter to select:"
+  for opt in "${options[@]}"; do
+    if [ "$opt" == "$selected" ]; then
+      echo -e "  \033[32m$opt\033[0m"  # Highlight the selected option in green
+    else
+      echo "  $opt"
+    fi
+  done
+}
+# Function to handle key inputs
+saint_navigate_menu() {
+  local options=("$@")
+  local selected=0
+
+  while true; do
+    clear
+    draw_menu "${options[@]}"
+    read -rsn1 key  # Read a single character (silent mode)
+
+    case $key in
+      $'\x1b')  # Escape character
+        read -rsn2 -t 0.1 key  # Read the next two characters
+        case $key in
+          '[A')  # Up arrow
+            ((selected--))
+            if [ $selected -lt 0 ]; then
+              selected=$((${#options[@]} - 1))
+            fi
+            ;;
+          '[B')  # Down arrow
+            ((selected++))
+            if [ $selected -ge ${#options[@]} ]; then
+              selected=0
+            fi
+            ;;
+        esac
+        ;;
+      '')  # Enter key
+        break
+        ;;
+    esac
+  done
+
+  # Return the selected option
+  echo ${options[$selected]}
+}

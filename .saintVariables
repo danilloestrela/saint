@@ -1,0 +1,29 @@
+#!/bin/bash
+# Required on .saint (top of function)
+
+  local configFilePath=$projectPath/.saint
+  local projectsDir="projects"
+  local projectName="Saint"
+  local projects=($(ls "$projectPath/$projectsDir"))
+  declare -A help
+  
+  # Color bash variables
+  local RED='\033[0;31m'
+  local GREEN='\033[0;32m'
+  local YELLOW='\033[1;33m'
+  local NC='\033[0m' #nocolor
+
+  # This is were the temp files for commands will be loaded. Your data will not be mixed with the saint core.
+  local SAINT_TEMP_FOLDER=${PROJECT_PATH}/saint_temp
+  local SAINT_METHODS_MAIN_COMMANDS_FILE=${SAINT_TEMP_FOLDER}/.saintMainCommands
+  local SAINT_METHODS_MAIN_HELP_FILE=${SAINT_TEMP_FOLDER}/.saintHelpCommands
+
+variablesSources=()
+
+for project in "${projects[@]}"; do
+  variablesSources+=( "$projectPath/$projectsDir/$project/.variables" )
+done
+
+for variable in "${variablesSources[@]}"; do
+  source "$variable"
+done
