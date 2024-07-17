@@ -8,10 +8,8 @@ saint_select_option() {
     # Use the select construct to create a menu
     select opt in "${options[@]}"; do
         if [ -n "$opt" ]; then
-            echo "You selected option $REPLY: $opt"
-            return $((REPLY - 1))
-        else
-            echo "Invalid choice. Please try again."
-        fi
+            echo "$opt"
+            return 0
+        fi;
     done
 }
