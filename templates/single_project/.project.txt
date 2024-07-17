@@ -32,7 +32,7 @@ ${newProjName}_add_help() {
 # Function to update help by parsing comments
 ${newProjName}_update_help() {
     initialize_help_file
-
+    echo -e ""
     saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Clearing help file at $${projNameUppercased}_HELP_FILE"
     : > "$${projNameUppercased}_HELP_FILE" # Clear existing help file
     if [ $? -ne 0 ]; then
@@ -58,11 +58,11 @@ ${newProjName}_update_help() {
         # Check for function definition"
         if [[ $line =~ ^[a-zA-Z_][a-zA-Z0-9_]*\(\)[[:space:]]* ]]; then
             function_name=$(echo $line | cut -d '(' -f 1)
-            saint_msg "Found function definition: $function_name"
+            saint_msg "Reading from definition: $function_name"
             if [[ " ${functions[*]} " == *" $function_name "* ]]; then
                 current_function=$function_name
                 capturing=true
-                saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Capturing help comments for function: $current_function"
+                saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Capturing help comments from current definition: $current_function"
             else
                 capturing=false
             fi

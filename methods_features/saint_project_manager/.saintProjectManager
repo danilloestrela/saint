@@ -32,13 +32,13 @@ saint_add_new_project() {
   # Print the formatted output
   echo -e ""
   printf "======================================== %-*s ========================================\n" 0 "CREATING TEMPLATES"
+  echo -e ""
   saint_create_projectName_template ${newProjName} && \
   saint_create_project_variables_template ${newProjName} ${newProjectPath} && \
   saint_create_project_alias_template ${newProjName} ${aliasNameChoice} && \
   saint_create_project_mainCommands_template ${newProjName} || \
   saint_msg "${RED}ERROR${NC} :: Something went wrong while creating the project template or help"
   # Add more fieles as needed, following the pattern above
-  echo -e ""
   ls $pDir -la
    
   if ! saint_validate_project_files "$pDir" "$newProjName"; then
@@ -49,6 +49,7 @@ saint_add_new_project() {
 
   
   saint_msg "${GREEN}Project \"${newProjName}\" created successfully with standard file structure.${NC}"
+  echo -e ""
   printf "======================================== %-*s ========================================" 0 "FINISHED TEMPLATES"
   echo -e ""
   saint_add_command "$newProjName"
@@ -56,8 +57,13 @@ saint_add_new_project() {
   
   saint_msg "${GREEN}Project "${newProjName}" added to main commands and help successfully.${NC} Reloading saint..."
   source ${PROJECT_PATH}/.saint  
-  
+  echo -e ""
+  printf "======================================== %-*s ========================================\n" 0 "UPDATING HELP ON ${newProjName}"
+  echo -e ""
   ${newProjName}_update_help
+  echo -e ""
+  printf "======================================== %-*s ========================================\n" 0 "END UPDATING HELP ON ${newProjName}"
+  echo -e ""
 }
 
 saint_delete_project() {
