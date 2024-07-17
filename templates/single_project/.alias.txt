@@ -1,0 +1,4 @@
+#!/bin/bash
+# Alias for ${newProjName}
+alias ${aliasName}="saint ${newProjName}"
+ 

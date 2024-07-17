@@ -1,0 +1,191 @@
+#!/bin/bash
+# depends on .saint / .saintHelpers
+# Specific functions for ${newProjName}
+
+
+# Getting current folder
+thisLocation=$(dirname "$0")
+# Template of help
+${projNameUppercased}_HELP_FILE="${thisLocation}/.help_descriptions"
+${projNameUppercased}_SCRIPT_FILE="${thisLocation}/$(basename "$0")"
+
+# "help" is a very common function you may want to add to remember the commands you have.
+# Initialize the help file if it doesn't exist
+initialize_help_file() {
+    if [ ! -f "$${projNameUppercased}_HELP_FILE" ]; then
+        saint_msg "Creating help file at ${${projNameUppercased}_HELP_FILE}"
+        touch "$${projNameUppercased}_HELP_FILE" || { saint_msg "Failed to create help file at ${${projNameUppercased}_HELP_FILE}"; exit 1; }
+    else
+        saint_msg "Help file already exists at ${${projNameUppercased}_HELP_FILE}"
+    fi
+}
+
+# Function to add help description
+${newProjName}_add_help() {
+    group=$1
+    command=$2
+    description=$3
+    saint_msg "Adding help description: $group | $command: $description"
+    echo "$group:$command:$description" >> "$${projNameUppercased}_HELP_FILE"
+}
+
+# Function to update help by parsing comments
+${newProjName}_update_help() {
+    initialize_help_file
+
+    saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Clearing help file at $${projNameUppercased}_HELP_FILE"
+    : > "$${projNameUppercased}_HELP_FILE" # Clear existing help file
+    if [ $? -ne 0 ]; then
+        saint_msg "Failed to clear help file at $${projNameUppercased}_HELP_FILE"
+        exit 1
+    fi
+
+    saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Starting to parse functions"
+    saint_msg "SCRIPT_FILE: $${projNameUppercased}_SCRIPT_FILE"
+
+    if [ ! -f "$${projNameUppercased}_SCRIPT_FILE" ]; then
+        saint_msg "Script file does not exist: $${projNameUppercased}_SCRIPT_FILE"
+        exit 1
+    fi
+
+    # Functions to parse
+    functions=("${newProjName}_run" "${newProjName}_install" "${newProjName}_code" "${newProjName}_goto")
+    capturing=false
+    current_function=""
+
+    while IFS= read -r line; do
+        # saint_msg "Reading line: $line"
+        # Check for function definition"
+        if [[ $line =~ ^[a-zA-Z_][a-zA-Z0-9_]*\(\)[[:space:]]* ]]; then
+            function_name=$(echo $line | cut -d '(' -f 1)
+            saint_msg "Found function definition: $function_name"
+            if [[ " ${functions[*]} " == *" $function_name "* ]]; then
+                current_function=$function_name
+                capturing=true
+                saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Capturing help comments for function: $current_function"
+            else
+                capturing=false
+            fi
+        elif $capturing && [[ $line =~ ^[[:space:]]*#@help ]]; then
+            saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Found help comment in $current_function"
+            comment=${line#*#@help }
+            if [[ $comment == *!* ]]; then
+                group=${comment%%!*}
+                rest=${comment#*!}
+                command=${rest%%:*}
+                description=${rest#*: }
+            else
+                group="General"
+                command=${comment%%:*}
+                description=${comment#*: }
+            fi
+            saint_msg "Processing help comment: group='$group', command='$command', description='$description'"
+            ${newProjName}_add_help "$group" "$command" "$description"
+        fi
+    done < "$${projNameUppercased}_SCRIPT_FILE"
+
+    if [ $? -ne 0 ]; then
+        saint_msg "Failed to read script file at $${projNameUppercased}_SCRIPT_FILE"
+        exit 1
+    fi
+
+    saint_msg "${GREEN}HELP UPDATE${NC} :: Help Updated!"
+}
+
+# Function to show help
+${newProjName}_help() {
+    local max_default_command_length=15
+    local max_command_length=0
+    local padding=2
+    local current_group=""
+    if [ -f $${projNameUppercased}_HELP_FILE ]; then
+        # Calculate the maximum length of the commands for alignment
+        while IFS=: read -r group command description; do
+            command_length=${#command}      
+            if (( command_length > max_command_length )); then
+                max_command_length=$command_length
+            fi
+        done < "$${projNameUppercased}_HELP_FILE"
+    fi
+    # Print the help header
+    printf "${GREEN}%-*s${NC}%*s%sn" $max_default_command_length "${newProjName}" $padding "Available commands for ${newProjName}." "$description"
+    printf "   |- ${YELLOW}%-*s${NC}%*s%sn" $max_default_command_length "help" $padding "Shows help commands for ${newProjName}" "$description"
+    printf "   |- ${YELLOW}%-*s${NC}%*s%sn" $max_default_command_length "update-help" $padding "Manually updates help commands (from comments)" "$description"
+    # Print the commands and descriptions aligned and grouped
+    if [ -f $${projNameUppercased}_HELP_FILE ]; then
+        while IFS=: read -r group command description; do
+            if [[ "$group" != "$current_group" ]]; then
+                echo -e "   ${GREEN}${group}${NC}"
+                current_group=$group
+            fi
+            printf "     |- ${YELLOW}%-*s${NC}%*s%sn" $max_command_length "$command" $padding "" "$description"
+        done < "$${projNameUppercased}_HELP_FILE"
+    else
+        saint_msg "No help file yet. You can start by running the command update-help"
+        saint_msg "To make a new help command on your saint project folder you can:"
+        echo -e "Add a comment like the following: ${YELLOW}'#@help nameOfGroup!nameOfCommand: Description'${NC}"
+        echo -e "If you don't add ${YELLOW}'nameOfGroup!'${NC} then it'll add to a group called ${YELLOW}'General'${NC}"
+        echo -e "${RED}WARNING: This will only be added through some functions. Check your project folder for more.${NC}"
+    fi
+}
+
+
+# Template of run
+# "install" is usually used to install some project on your side. I use it mainly for js projects,
+# but you can addapt it for the one of your choice (go, rust, php, etc)
+${newProjName}_install() {
+    lastCommand=$1
+    case $2 in
+        # Add cases here
+        # Ex: site) ${newProjName}_goto ${lastCommand} ${${newProjName}SitePath} && npm i || cd - ;;
+        "") saint_empty $lastCommand;;
+        *) saint_invalid_command $lastCommand $newProjName;;
+    esac
+}
+
+
+# Template of run
+# "run" is usually used to run some project on your side. I use it mainly for js projects,
+# but you can addapt it for the one of your choice (go, rust, php, etc)
+${newProjName}_run() {
+    lastCommand=$1
+    case $2 in
+        # Add cases here
+        # Ex: site) ${newProjName}_goto ${lastCommand} ${${newProjName}SitePath} && npm run dev || cd - ;;
+        "") saint_empty $lastCommand;;
+        *) saint_invalid_command $lastCommand $newProjName;;
+    esac
+}
+
+
+# Template of code
+# "code" function is usually used to open your project on visual code. you can addapt it to your own IDE
+${newProjName}_code() {
+    lastCommand=$1
+    newProjName=$2
+    case $newProjName in
+        # Add cases here
+        # Ex: site) saint_cd_open_code ${${newProjName}SitePath} || cd - ;;
+        "") saint_empty $lastCommand;;
+        *) saint_invalid_command $lastCommand $newProjName;;
+    esac
+}
+
+
+# Template of goto
+${newProjName}_goto() {
+    lastCommand=$1
+    newProjName=$2
+    case $newProjName in
+        # Add cases here
+        # Ex: site) saint_cd ${${newProjName}SitePath} || cd - ;;
+        "") saint_empty $lastCommand;;
+        *) saint_invalid_command $lastCommand $newProjName;;
+    esac
+}
+
+
+# Loading Main Commands
+source ${thisLocation}/.mainCommands
+# Loading Alias
+source ${thisLocation}/.alias  

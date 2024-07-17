@@ -1,0 +1,17 @@
+#!/bin/bash 
+# Main commands for ${newProjName} 
+${newProjName}_main_commands() { 
+  lastCompleteCommand="$1 $2" 
+
+  case $2 in
+    code) ${newProjName}_code ${lastCompleteCommand} ${@:3};;  
+    goto) ${newProjName}_goto ${lastCompleteCommand} ${@:3};;  
+    help) ${newProjName}_help;;   
+    update-help) ${newProjName}_update_help;;  
+    install) ${newProjName}_install  ${lastCompleteCommand} ${@:3};;  
+    run) ${newProjName}_run  ${lastCompleteCommand} ${@:3};;  
+    "") saint_empty ${lastCompleteCommand};;  
+    *) saint_invalid_command $1 $2;;  
+  esac  
+
+} 
