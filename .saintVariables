@@ -1,29 +1,76 @@
 #!/bin/bash
 # Required on .saint (top of function)
 
-  local configFilePath=$projectPath/.saint
-  local projectsDir="projects"
-  local projectName="Saint"
-  local projects=($(ls "$projectPath/$projectsDir"))
-  declare -A help
-  
-  # Color bash variables
-  local RED='\033[0;31m'
-  local GREEN='\033[0;32m'
-  local YELLOW='\033[1;33m'
-  local NC='\033[0m' #nocolor
+local configFilePath=${PROJECT_PATH}/.saint
+local projectsDir="projects"
+local projectName="Saint"
+local projects=()
+if [ -d "${PROJECT_PATH}/$projectsDir" ] && [ "$(find ${PROJECT_PATH}/$projectsDir -mindepth 1 -type d | head -n 1)" ]; then
+  projects=("${PROJECT_PATH}/$projectsDir"/*)
+fi
+declare -A help
 
-  # This is were the temp files for commands will be loaded. Your data will not be mixed with the saint core.
-  local SAINT_TEMP_FOLDER=${PROJECT_PATH}/saint_temp
-  local SAINT_METHODS_MAIN_COMMANDS_FILE=${SAINT_TEMP_FOLDER}/.saintMainCommands
-  local SAINT_METHODS_MAIN_HELP_FILE=${SAINT_TEMP_FOLDER}/.saintHelpCommands
+# This is were the temp files for commands will be loaded. Your data will not be mixed with the saint core.
+local SAINT_TEMP_FOLDER=${PROJECT_PATH}/saint_temp
+local SAINT_PROJECTS_FOLDER=${PROJECT_PATH}/${projectsDir}
+local SAINT_METHODS_MAIN_COMMANDS_FILE=${SAINT_TEMP_FOLDER}/.saintMainCommands
+local SAINT_METHODS_MAIN_HELP_FILE=${SAINT_TEMP_FOLDER}/.saintHelpCommands
 
+# Color bash variables
+if command -v tput &> /dev/null; then
+  # COLORS
+  local GRAY="$(tput setaf 0)"
+  local RED="$(tput setaf 1)"
+  local GREEN="$(tput setaf 2)"
+  local YELLOW="$(tput setaf 3)"
+  local BLUE="$(tput setaf 4)"
+  local MAGENTA="$(tput setaf 5)"
+  local CYAN="$(tput setaf 6)"
+  local WHITE="$(tput setaf 7)"
+  local GRAY_BOLD="$(tput setaf 0; tput bold)"
+  local RED_BOLD="$(tput setaf 1; tput bold)"
+  local GREEN_BOLD="$(tput setaf 2; tput bold)"
+  local YELLOW_BOLD="$(tput setaf 3; tput bold; tput smul)"
+  local BLUE_BOLD="$(tput setaf 4; tput bold)"
+  local MAGENTA_BOLD="$(tput setaf 5; tput bold)"
+  local CYAN_BOLD="$(tput setaf 6; tput bold)"
+  local WHITE_BOLD="$(tput setaf 7; tput bold)"
+  local NC="$(tput sgr0)"
+else
+    saint_msg "tput is not available, colors will not be displayed"
+    # Default values if tput is not available
+    local GRAY=""
+    local RED=""
+    local GREEN=""
+    local YELLOW=""
+    local BLUE=""
+    local MAGENTA=""
+    local CYAN=""
+    local WHITE=""
+    local GRAY_BOLD=""
+    local RED_BOLD=""
+    local GREEN_BOLD=""
+    local YELLOW_BOLD=""
+    local BLUE_BOLD=""
+    local MAGENTA_BOLD=""
+    local CYAN_BOLD=""
+    local WHITE_BOLD=""
+    local NC=""
+fi
+
+# loads all projects variables
 variablesSources=()
 
-for project in "${projects[@]}"; do
-  variablesSources+=( "$projectPath/$projectsDir/$project/.variables" )
-done
-
-for variable in "${variablesSources[@]}"; do
-  source "$variable"
-done
+if [ ${#projects[@]} -gt 0 ]; then
+  for project in "${projects[@]}"; do    # Check if the project directory is not empty
+    if [ -n "$project" ]; then
+      variablesSources+=("${project}/.variables" )
+    fi
+  done
+ # saint_msg "Loading variables..."
+  if [ ${#variablesSources[@]} -gt 0 ]; then
+    for variable in "${variablesSources[@]}"; do
+      source $variable
+    done
+  fi
+fi

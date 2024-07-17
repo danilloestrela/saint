@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Function to display a numbered list of options and allow user to select one
+saint_select_option() {
+    local PS3="Please select an option: "
+    local options=("$@")
+
+    # Use the select construct to create a menu
+    select opt in "${options[@]}"; do
+        if [ -n "$opt" ]; then
+            echo "You selected option $REPLY: $opt"
+            return $((REPLY - 1))
+        else
+            echo "Invalid choice. Please try again."
+        fi
+    done
+}

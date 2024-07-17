@@ -1,0 +1,107 @@
+#!/bin/bash
+
+saint_add_new_project() {
+  local newProjName=$1
+  saint_msg "Hey, lets start to ${GREEN}install a new project${NC}!"
+  if [ ! -n "$newProjName" ]; then
+    read "newProjName?Enter new project name: "
+  fi
+  
+  read "newProjectPath?Enter the path for ${YELLOW_BOLD}${newProjName}${NC} (default: ~/${newProjName}): "  
+  # Checking with the user if he wants to create a custom alias for CLI
+  read "aliasNameChoice?Please, type the name of the alias you want to set up for ${YELLOW_BOLD}${newProjName}${NC} (default: ${newProjName}Cmd): "
+  # Check if newProjName is empty
+  if [ -z "$newProjName" ]; then
+    saint_msg "${RED}No project name entered. Exiting.${NC}"
+    return 1
+  fi
+  
+
+  local pDir="${SAINT_PROJECTS_FOLDER}/${newProjName}"
+
+  if [ "${pDir}" = "${SAINT_PROJECTS_FOLDER}/" ]; then 
+    saint_msg "${RED}ERROR${NC} :: Can't create a project with \"${newProjName}\" name."
+  fi;
+
+  if [ -d ${pDir} ]; then 
+    saint_msg "${RED}This project already exists.${NC}"
+    return 1
+  fi;
+
+  mkdir -p "${pDir}"
+  # Print the formatted output
+  echo -e ""
+  printf "======================================== %-*s ========================================\n" 0 "CREATING TEMPLATES"
+  saint_create_projectName_template ${newProjName} && \
+  saint_create_project_variables_template ${newProjName} ${newProjectPath} && \
+  saint_create_project_alias_template ${newProjName} ${aliasNameChoice} && \
+  saint_create_project_mainCommands_template ${newProjName} || \
+  saint_msg "${RED}ERROR${NC} :: Something went wrong while creating the project template or help"
+  # Add more fieles as needed, following the pattern above
+  echo -e ""
+  ls $pDir -la
+   
+  if ! saint_validate_project_files "$pDir" "$newProjName"; then
+    saint_msg "${RED}ERROR${NC} :: There must be a file that was not created properly."
+    rm -rf "$pDir"
+    return 1
+  fi
+
+  
+  saint_msg "${GREEN}Project \"${newProjName}\" created successfully with standard file structure.${NC}"
+  printf "======================================== %-*s ========================================" 0 "FINISHED TEMPLATES"
+  echo -e ""
+  saint_add_command "$newProjName"
+  echo "${newProjName}_help" >> $SAINT_METHODS_MAIN_HELP_FILE
+  
+  saint_msg "${GREEN}Project "${newProjName}" added to main commands and help successfully.${NC} Reloading saint..."
+  source ${PROJECT_PATH}/.saint  
+  
+  ${newProjName}_update_help
+}
+
+saint_delete_project() {
+  saint_msg "Hey, select one of the options to ${RED}delete${NC} a project."
+  
+  # Projects from folders
+  local all_projects_avaliable=()
+  for project in "$SAINT_PROJECTS_FOLDER"/*; do
+    if [ -d "$project" ]; then
+      local projName=$(basename "$project")
+      all_projects_avaliable+=("$projName")
+    fi
+  done
+  
+  # Solicita ao usuário para selecionar um projeto a ser deletado
+  saint_select_option "${all_projects_avaliable[@]}"
+  selected_index=$?
+  deleteProjectName="${all_projects_avaliable[$selected_index]}"
+   
+  # checks selection
+  if [ -z "$deleteProjectName" ]; then
+    saint_msg "No project selected."
+    return
+  fi
+  
+  pDir="${SAINT_PROJECTS_FOLDER}/${deleteProjectName}"
+
+  # Checks if directory exists
+  if [ -d "$pDir" ]; then
+    # Removes folder and all files
+    rm -r "$pDir"
+    saint_msg "${GREEN}${deleteProjectName} project ${RED}deleted${GREEN} successfully.${NC}"
+
+    # Removes command from Saint Main Commands
+    saint_remove_command "$deleteProjectName"
+
+    #Removes help command from saint help commands
+    sed -i "/${deleteProjectName}_help/d" "${PROJECT_PATH}/.saintHelpCommands"
+
+    # Rebuilds help
+    saint_rebuild_help
+    saint_msg "${deleteProjectName} project removed from main commands and help. Reloading saint..."
+    source "${PROJECT_PATH}/.saint"
+  else
+    saint_msg "${deleteProjectName} does not exist."
+  fi
+}

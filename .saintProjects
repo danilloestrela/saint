@@ -2,10 +2,15 @@
 # Checks project folder (if exists) and source it.
 projectSources=()
 
-for project in "${projects[@]}"; do
-  projectSources+=( "${projectPath}/${projectsDir}/${project}/.${project}" ) 
-done
 
-for source in "${projectSources[@]}"; do
-  source "$source"
-done
+#saint_msg "Loading projects..."
+if [ ${#projects[@]} -gt 0 ]; then
+  for project in "${projects[@]}"; do
+    local sourceProjectName=$(basename "$project")
+    projectSources+=( "${project}/.${sourceProjectName}" ) 
+  done
+
+  for source in "${projectSources[@]}"; do
+    source "$source"
+  done
+fi;
