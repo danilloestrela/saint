@@ -50,6 +50,7 @@ I am not sure yet how the installation would work on a Mac (since I don't have o
 
 ## TODOs:
 - [ ] Create a README explaining the architecture and the "whys" of each folder. (Always open to think differently about the architecture)
+- [ ] On help manager: make it more safe by having him to confirm that there is a help method in project folder before rebuilding.
 - [ ] Add a function to automate Saint installation on any Linux/Mac/WSL.
 - [ ] Create a file with supported Operating Systems (as tested by the community).
 - [ ] Optimize helpers to avoid compromising projects from older versions (preferably).
