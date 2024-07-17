@@ -78,18 +78,25 @@ saint_delete_project() {
     fi
   done
   
-  # Solicita ao usuário para selecionar um projeto a ser deletado
-  saint_select_option "${all_projects_avaliable[@]}"
-  selected_index=$?
-  deleteProjectName="${all_projects_avaliable[$selected_index]}"
-   
+  # Select a project to be deleted
+  deleteProjectName=$(saint_select_option "${all_projects_avaliable[@]}")
+
   # checks selection
   if [ -z "$deleteProjectName" ]; then
     saint_msg "No project selected."
     return
   fi
+
+  local pDir="${SAINT_PROJECTS_FOLDER}/${deleteProjectName}"
   
-  pDir="${SAINT_PROJECTS_FOLDER}/${deleteProjectName}"
+  if [ ! -d "${pDir}" ] || \
+     [[ "${pDir}" == "${SAINT_PROJECTS_FOLDER}/" || \
+        "${pDir}" == "${SAINT_PROJECTS_FOLDER}"
+      ]]; then
+    saint_msg "Can't delete this folder (${pDir})."
+    return
+  fi
+  
 
   # Checks if directory exists
   if [ -d "$pDir" ]; then
@@ -100,10 +107,7 @@ saint_delete_project() {
     # Removes command from Saint Main Commands
     saint_remove_command "$deleteProjectName"
 
-    #Removes help command from saint help commands
-    sed -i "/${deleteProjectName}_help/d" "${PROJECT_PATH}/.saintHelpCommands"
-
-    # Rebuilds help
+    # Rebuilds help (put all existing projects help commands back in)
     saint_rebuild_help
     saint_msg "${deleteProjectName} project removed from main commands and help. Reloading saint..."
     source "${PROJECT_PATH}/.saint"
@@ -111,3 +115,5 @@ saint_delete_project() {
     saint_msg "${deleteProjectName} does not exist."
   fi
 }
+
+source "${PROJECT_PATH}/methods_features/saint_project_manager/.saintProjectManagerBackup"
