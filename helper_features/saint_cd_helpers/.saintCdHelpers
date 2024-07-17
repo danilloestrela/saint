@@ -1,0 +1,29 @@
+#!/bin/bash
+
+saint_cd () {
+    directoryPath=$1
+    if ls $directoryPath; then
+        saint_msg "You're now on ${GREEN}$directoryPath${NC} 😁"
+        cd $directoryPath || return
+    else
+        saint_msg "${RED}$directoryPath${NC} :: This path does not exist or there was an error."
+    fi
+};
+
+saint_cd_open_code () {
+    directoryPath=$1
+    if ls $directoryPath; then
+        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' into Visual Code for you 🤫."
+        cd $directoryPath && code . &&
+        cd - || cd - 
+    fi
+};
+
+saint_cd_open_pstorm_windows() {
+  directoryPath=$1
+    if ls $directoryPath; then
+        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' into PhpStorm for you 🤫."
+        cd $directoryPath && pstorm . &&
+        cd - || cd - 
+    fi
+}

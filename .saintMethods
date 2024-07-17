@@ -56,7 +56,6 @@ saint_remove_command() {
   sed -i "\|${command}|d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
 }
 
-
 saint_validate_project_files() {
   local project_dir=$1
   local project_name=$2

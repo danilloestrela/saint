@@ -13,89 +13,6 @@ saint_empty() {
     saint_msg "${RED}$emptyCommand${NC} :: Command is empty. Try '${projectCommand} ${GREEN}help${NC}'"
 };
 
-# Function to check if Docker is running
-saint_check_docker() {
-  if ! docker info > /dev/null 2>&1; then
-    saint_msg "${RED}ERROR${NC} :: Docker is ${RED}not running${NC}. Please ${YELLOW}start Docker${NC} and try again."
-    return 1
-  else
-    echo "Docker is running."
-  fi
-}
-
-saint_docker() {
-    dockerFolder=$1
-    dockerCommands=${2:@}
-    if ls $dockerFolder; then
-        saint_msg "I'll try to ${GREEN}run${NC} docker commands on path '${YELLOW}${dockerFolder}${NC}'..."
-        cd $dockerFolder && docker-compose ${dockerCommands} &&
-        cd - || cd -
-    else
-        saint_msg "${RED}$dockerFolder${NC} :: his path does not exist or there was an error."
-    fi
-};
-
-saint_docker_up() {
-    dockerName=$1
-    dockerDir=$2
-    if ls $dockerDir; then
-        saint_msg "I'll try to ${GREEN}turn on${NC} project ${GREEN}${dockerName}${NC} on path '${YELLOW}${dockerDir}${NC}' using docker-compose..."
-        cd $dockerDir && docker-compose up -d --force-recreate &&
-        cd - || cd -
-    else
-        saint_msg "${RED}$dockerDir${NC} :: his path does not exist or there was an error."
-    fi
-};
-
-saint_docker_down() {
-    dockerName=$1
-    dockerDir=$2
-    if ls $dockerDir; then
-        saint_msg "I'll try to ${RED}turn off${NC} project ${GREEN}${dockerName}${NC} on path '${YELLOW}${dockerDir}${NC}' using docker-compose..."
-        cd $dockerDir && docker-compose down &&
-        cd - || cd -
-    else
-        saint_msg "${RED}$dockerDir${NC} :: his path does not exist or there was an error."
-    fi
-};
-
-saint_docker_open_container() {
-    dockerDir=$1
-    dockerContainerName=$2
-    dockerCommands=$3
-
-    cd $dockerDir && docker-compose exec $dockerContainerName $dockerCommands /bin/bash &&
-    cd - || cd -
-}
-
-saint_cd () {
-    directoryPath=$1
-    if ls $directoryPath; then
-        saint_msg "You're now on ${GREEN}$directoryPath${NC} 😁"
-        cd $directoryPath || return
-    else
-        saint_msg "${RED}$directoryPath${NC} :: This path does not exist or there was an error."
-    fi
-};
-
-saint_cd_open_code () {
-    directoryPath=$1
-    if ls $directoryPath; then
-        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' into Visual Code for you 🤫."
-        cd $directoryPath && code . &&
-        cd - || cd - 
-    fi
-};
-
-saint_cd_open_pstorm_windows() {
-  directoryPath=$1
-    if ls $directoryPath; then
-        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' into PhpStorm for you 🤫."
-        cd $directoryPath && pstorm . &&
-        cd - || cd - 
-    fi
-}
-
 saint_invalid_command () {
     parentCommand=$1
     invalidCommand=$2
@@ -129,4 +46,6 @@ saint_print_help() {
     printf "${command_color}%-${max_command_length}s${NC} - ${description_color}%s${NC}\n" "${command}" "${description}"
 }
 
+source "${PROJECT_PATH}/helper_features/saint_cd_helpers/.saintCdHelpers"
+source "${PROJECT_PATH}/helper_features/saint_docker_helpers/.saintDockerHelpers"
 source "${PROJECT_PATH}/helper_features/saint_select_option/.saintSelectOption"

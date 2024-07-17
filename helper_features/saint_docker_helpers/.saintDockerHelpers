@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Function to check if Docker is running
+saint_check_docker() {
+  if ! docker info > /dev/null 2>&1; then
+    saint_msg "${RED}ERROR${NC} :: Docker is ${RED}not running${NC}. Please ${YELLOW}start Docker${NC} and try again."
+    return 1
+  else
+    echo "Docker is running."
+  fi
+}
+
+saint_docker() {
+    dockerFolder=$1
+    dockerCommands=${2:@}
+    if ls $dockerFolder; then
+        saint_msg "I'll try to ${GREEN}run${NC} docker commands on path '${YELLOW}${dockerFolder}${NC}'..."
+        cd $dockerFolder && docker-compose ${dockerCommands} &&
+        cd - || cd -
+    else
+        saint_msg "${RED}$dockerFolder${NC} :: his path does not exist or there was an error."
+    fi
+};
+
+saint_docker_up() {
+    dockerName=$1
+    dockerDir=$2
+    if ls $dockerDir; then
+        saint_msg "I'll try to ${GREEN}turn on${NC} project ${GREEN}${dockerName}${NC} on path '${YELLOW}${dockerDir}${NC}' using docker-compose..."
+        cd $dockerDir && docker-compose up -d --force-recreate &&
+        cd - || cd -
+    else
+        saint_msg "${RED}$dockerDir${NC} :: his path does not exist or there was an error."
+    fi
+};
+
+saint_docker_down() {
+    dockerName=$1
+    dockerDir=$2
+    if ls $dockerDir; then
+        saint_msg "I'll try to ${RED}turn off${NC} project ${GREEN}${dockerName}${NC} on path '${YELLOW}${dockerDir}${NC}' using docker-compose..."
+        cd $dockerDir && docker-compose down &&
+        cd - || cd -
+    else
+        saint_msg "${RED}$dockerDir${NC} :: his path does not exist or there was an error."
+    fi
+};
+
+saint_docker_open_container() {
+    dockerDir=$1
+    dockerContainerName=$2
+    dockerCommands=$3
+
+    cd $dockerDir && docker-compose exec $dockerContainerName $dockerCommands /bin/bash &&
+    cd - || cd -
+}
