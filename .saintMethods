@@ -1,148 +1,6 @@
 #!/bin/bash
 #Templates for creating new projects
 
-saint_create_project_from_template() {
-  local newProjName=$1
-  local templateTxtName=$2
-  local projectFileOutput=$3
-  local pDir="${PROJECT_PATH}/projects/${newProjName}"
-  local fileNameWithPath="${pDir}/${projectFileOutput}"
-  local projNameUppercased=$(echo "$newProjName" | tr '[:lower:]' '[:upper:]')
-
-    # Template Path
-  local templatePath="${PROJECT_PATH}/templates/single_project/${templateTxtName}"
-  if [ ! -f "$templatePath" ]; then
-    saint_msg "${RED}ERROR${NC} :: Template file (${RED}${templatePath}${NC}) not found."
-    return 1
-  fi
-  # Reading template content
-  local templateContent=$(<"$templatePath")
-
-  # Overwriting variables in the template
-  templateContent=$(echo "$templateContent" | sed "s|\${newProjName}|${newProjName}|g")
-  templateContent=$(echo "$templateContent" | sed "s|\${projNameUppercased}|${projNameUppercased}|g")
-
-  if [ $# -gt 3 ]; then
-    # Skipping the first 3 arguments
-    shift 3 
-    for var in "$@"; do
-      # Checking if we have a var there
-      if [[ $var == *"="* ]]; then
-        varName=$(echo "$var" | cut -d '=' -f 1)
-        varValue=$(echo "$var" | cut -d '=' -f 2-)
-        templateContent=$(echo "$templateContent" | sed "s|\${$varName}|${varValue}|g")
-      fi
-    done
-  fi
-
-  # Writing writing new contents on the path
-  echo "$templateContent" > "$fileNameWithPath"
-
-  # Checking if file was created
-  if [ -f "$fileNameWithPath" ]; then 
-    saint_msg "File ${YELLOW}${projectFileOutput}${NC} ${GREEN}created successfully${NC}."
-    echo ""
-  else 
-    saint_msg "File ${YELLOW}${projectFileOutput}${NC} ${RED}not created.${NC}"
-  fi
-}
-
-
-
-saint_create_projectName_template() {
-  local newProjName=$1
-  local fileTemplate=".project.txt"
-  local projectFileOutput=".${newProjName}"
-  saint_msg "Creating ${GREEN}.${newProjName}${NC} file from template..."
-
-  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput}
-}
-
-#.variables template
-saint_create_project_variables_template() {
-  local newProjName=$1
-  local projPathProp=$2
-  local fileTemplate=".variables.txt"
-  local projectFileOutput=".variables"
-  local newProjectPath="newProjPath=\"${projPathProp:-~/${newProjName}}\""
-  saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
-  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput} "${projectPathPropVar}"
-  echo ""
-}
-
-#.alias template
-saint_create_project_alias_template() {
-  local newProjName=$1
-  local aliasNameProp=$2
-  local aliasName=${${aliasNameProp}:-${newProjName}Cmd} #sets up a pattern one only if the comand is empty
-  local fileTemplate=".alias.txt"
-  local projectFileOutput=".alias"
-  local aliasNameChoice="aliasName=\"${aliasName}\""
-  saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
-  # Setting up .alias file
-  
-  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput} "${aliasNameChoice}"
-  echo ""
-}
-
-#.mainCommands template
-saint_create_project_mainCommands_template() {
-  local newProjName=$1
-  local fileTemplate=".mainCommands.txt"
-  local projectFileOutput=".mainCommands"
-  saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
-  # Setting up .mainCommands file
-  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput}
-  echo ""
-}
-
-# BEGIN saint_help
-saint_help() {
-  # Display Help
-  echo -e "${GREEN}Commands available for this script:${NC}"
-  echo -e ""
-  echo -e "${YELLOW}${projectName} commands:${NC}"
-  saint_print_help "add" "Add a new project"
-  saint_print_help "delete" "Delete an existing project"
-  saint_print_help "edit" "Edit the Saint script"
-  saint_print_help "list" "List all projects"
-  saint_print_help "help" "Show this help message"
-  saint_print_help "update-commands" "Update project commands"
-  echo -e ""
-  echo -e "${YELLOW}Project-specific commands:${NC}"
-  if [ -s $SAINT_METHODS_MAIN_HELP_FILE ]; then
-    while read -r line; do
-      eval "$line"
-    done < $SAINT_METHODS_MAIN_HELP_FILE
-  else
-    echo -e "No project help commands available."
-  fi
-}
-# END saint_help
-
-saint_rebuild_help() {
-  saint_msg "${YELLOW}Rebuilding${NC} saint help method..."
-
-  # Path to the .saintHelpCommands file
-  local helpFile=$SAINT_METHODS_MAIN_HELP_FILE
-  
-  # Clear the existing .saintHelpCommands file
-  : > "$helpFile"
-
-  # Add help commands for existing projects
-  if [ -d "${SAINT_PROJECTS_FOLDER}" ]; then
-    for project in "${SAINT_PROJECTS_FOLDERSAINT_PROJECTS_FOLDER}/"*; do
-        projName=$(basename "$project")
-        # Check if the project has a help function and add it
-        if [ -f "${SAINT_PROJECTS_FOLDER}/${projName}/.${projName}" ]; then
-            echo "${projName}_help" >> "$helpFile"
-        fi
-    done
-  fi;
-
-  saint_msg "${YELLOW}saint_help${NC} commands updated successfully in ${helpFile}."
-}
-
 # Returns the list of current projects
 saint_project_list() {
   # Count the number of projects
@@ -249,27 +107,20 @@ saint_initialize_main_commands() {
   if [ ! -d "${SAINT_TEMP_FOLDER}" ]; then
     mkdir "${SAINT_TEMP_FOLDER}"
   fi;
+  
   if [ ! -f ${SAINT_METHODS_MAIN_COMMANDS_FILE} ] || [ ! -d $SAINT_TEMP_FOLDER ]; then
-    cat <<EOL > ${SAINT_METHODS_MAIN_COMMANDS_FILE}
-#!/bin/bash
-
-    case \$1 in
-        add) saint_add_new_project \${@:2} ;;
-        delete) saint_delete_project ;;
-        edit) code \${PROJECT_PATH};;
-        list) saint_project_list ;;
-        help) saint_help ;;
-        update-commands) saint_update_project_commands ;;
-        #BEGIN-MAIN-COMMANDS
-        #END-MAIN-COMMANDS
-        "") saint_msg "Saint is \${GREEN_BOLD}running\${NC}  🤖";;
-        *) saint_invalid_command "saint" $1 ;;
-    esac 
-EOL
+    local templatePath="${PROJECT_PATH}/templates/saint_temps/.saintMainCommands.txt"
+    local fileNameWithPath="${SAINT_METHODS_MAIN_COMMANDS_FILE}"
+    # Reading template content
+    local templateContent=$(<"$templatePath")
+    # Writing writing new contents on the path
+    echo "$templateContent" > "$fileNameWithPath"
     saint_update_project_commands && saint_rebuild_help || return 1
   else
     return 1
   fi
 }
 
+source "${PROJECT_PATH}/methods_features/saint_help_manager/.saintHelpManager"
+source "${PROJECT_PATH}/methods_features/saint_template_manager/.saintTemplateManager"
 source "${PROJECT_PATH}/methods_features/saint_project_manager/.saintProjectManager"
