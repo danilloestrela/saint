@@ -114,9 +114,9 @@ ${newProjName}_help() {
       fi
   fi
     # Print the help header
-    printf "${GREEN}%-*s${NC}%*s%s\n" $max_default_command_length "${newProjName}" $padding "Available commands for ${newProjName}." "$description"
-    printf "   |- ${YELLOW}%-*s${NC}%*s%s\n" $max_default_command_length "help" $padding "Shows help commands for ${newProjName}" "$description"
-    printf "   |- ${YELLOW}%-*s${NC}%*s%s\n" $max_default_command_length "update-help" $padding "Manually updates help commands (from comments)" "$description"
+    printf "${GREEN}%-*s${NC}%*s%s\\n" $max_default_command_length "${newProjName}" $padding "Available commands for ${newProjName}." "$description"
+    printf "   |- ${YELLOW}%-*s${NC}%*s%s\\n" $max_default_command_length "help" $padding "Shows help commands for ${newProjName}" "$description"
+    printf "   |- ${YELLOW}%-*s${NC}%*s%s\\n" $max_default_command_length "update-help" $padding "Manually updates help commands (from comments)" "$description"
     # Print the commands and descriptions aligned and grouped
     if [ -f $${projNameUppercased}_HELP_FILE ]; then
         while IFS=: read -r group command description; do
@@ -124,7 +124,7 @@ ${newProjName}_help() {
                 echo -e "   ${GREEN}${group}${NC}"
                 current_group=$group
             fi
-            printf "     |- ${YELLOW}%-*s${NC}%*s%s\n" $max_command_length "$command" $padding "" "$description"
+            printf "     |- ${YELLOW}%-*s${NC}%*s%s\\n" $max_command_length "$command" $padding "" "$description"
         done < "$${projNameUppercased}_HELP_FILE"
     else
         saint_msg "No help file yet. You can start by running the command update-help"
