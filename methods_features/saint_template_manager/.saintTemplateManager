@@ -1,0 +1,94 @@
+#!/bin/bash
+
+saint_create_project_from_template() {
+  local newProjName=$1
+  local templateTxtName=$2
+  local projectFileOutput=$3
+  local pDir="${PROJECT_PATH}/projects/${newProjName}"
+  local fileNameWithPath="${pDir}/${projectFileOutput}"
+  local projNameUppercased=$(echo "$newProjName" | tr '[:lower:]' '[:upper:]')
+
+  # Template Path
+  local templatePath="${PROJECT_PATH}/templates/single_project/${templateTxtName}"
+  if [ ! -f "$templatePath" ]; then
+    saint_msg "${RED}ERROR${NC} :: Template file (${RED}${templatePath}${NC}) not found."
+    return 1
+  fi
+  # Reading template content
+  local templateContent=$(<"$templatePath")
+
+  # Overwriting variables in the template
+  templateContent=$(echo "$templateContent" | sed "s|\${newProjName}|${newProjName}|g")
+  templateContent=$(echo "$templateContent" | sed "s|\${projNameUppercased}|${projNameUppercased}|g")
+
+  if [ $# -gt 3 ]; then
+    # Skipping the first 3 arguments
+    shift 3 
+    for var in "$@"; do
+      # Checking if we have a var there
+      if [[ $var == *"="* ]]; then
+        varName=$(echo "$var" | cut -d '=' -f 1)
+        varValue=$(echo "$var" | cut -d '=' -f 2-)
+        templateContent=$(echo "$templateContent" | sed "s|\${$varName}|${varValue}|g")
+      fi
+    done
+  fi
+
+  # Writing writing new contents on the path
+  echo "$templateContent" > "$fileNameWithPath"
+
+  # Checking if file was created
+  if [ -f "$fileNameWithPath" ]; then 
+    saint_msg "File ${YELLOW}${projectFileOutput}${NC} ${GREEN}created successfully${NC}."
+    echo ""
+  else 
+    saint_msg "File ${YELLOW}${projectFileOutput}${NC} ${RED}not created.${NC}"
+  fi
+}
+
+saint_create_projectName_template() {
+  local newProjName=$1
+  local fileTemplate=".project.txt"
+  local projectFileOutput=".${newProjName}"
+  saint_msg "Creating ${GREEN}.${newProjName}${NC} file from template..."
+
+  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput}
+}
+
+#.variables template
+saint_create_project_variables_template() {
+  local newProjName=$1
+  local projPathProp=$2
+  local fileTemplate=".variables.txt"
+  local projectFileOutput=".variables"
+  local newProjectPath="newProjPath=\"${projPathProp:-~/${newProjName}}\""
+  saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
+  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput} "${projectPathPropVar}"
+  echo ""
+}
+
+#.alias template
+saint_create_project_alias_template() {
+  local newProjName=$1
+  local aliasNameProp=$2
+  local aliasName=${${aliasNameProp}:-${newProjName}Cmd} #sets up a pattern one only if the comand is empty
+  local fileTemplate=".alias.txt"
+  local projectFileOutput=".alias"
+  local aliasNameChoice="aliasName=\"${aliasName}\""
+  saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
+  # Setting up .alias file
+  
+  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput} "${aliasNameChoice}"
+  echo ""
+}
+
+#.mainCommands template
+saint_create_project_mainCommands_template() {
+  local newProjName=$1
+  local fileTemplate=".mainCommands.txt"
+  local projectFileOutput=".mainCommands"
+  saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
+  # Setting up .mainCommands file
+  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput}
+  echo ""
+}
