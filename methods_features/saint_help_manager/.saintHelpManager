@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# BEGIN saint_help
+saint_help() {
+  # Display Help
+  echo -e "${GREEN}Commands available for this script:${NC}"
+  echo -e ""
+  echo -e "${YELLOW}${projectName} commands:${NC}"
+  saint_print_help "add" "Add a new project"
+  saint_print_help "delete" "Delete an existing project"
+  saint_print_help "edit" "Edit the Saint script"
+  saint_print_help "list" "List all projects"
+  saint_print_help "help" "Show this help message"
+  saint_print_help "update-help" "Rebuilds project help commands (updates to existing, does not overwrite)"
+  saint_print_help "update-commands" "Update project commands"
+  echo -e ""
+  echo -e "${YELLOW}Project-specific commands:${NC}"
+  if [ -s $SAINT_METHODS_MAIN_HELP_FILE ]; then
+    while read -r line; do
+      eval "$line"
+    done < $SAINT_METHODS_MAIN_HELP_FILE
+  else
+    echo -e "No project help commands available."
+  fi
+}
+# END saint_help
+
+saint_rebuild_help() {
+  saint_msg "${YELLOW}Rebuilding${NC} saint help method..."
+
+  # Path to the .saintHelpCommands file
+  local helpFile="${SAINT_METHODS_MAIN_HELP_FILE}"
+  
+  # Clear the existing .saintHelpCommands file
+  : > "$helpFile"
+  # Add help commands for existing projects
+  if [ -d "${SAINT_PROJECTS_FOLDER}" ] && [ "$(find ${SAINT_PROJECTS_FOLDER} -mindepth 1 -type d | head -n 1)" ]; then
+      # Expand the glob pattern to an array
+      projectsOnFolder=("${SAINT_PROJECTS_FOLDER}"/*)
+      # Check if the array contains any elements
+      if [ ${#projectsOnFolder[@]} -gt 0 ]; then
+          for project in "${projectsOnFolder[@]}"; do
+              if [ -d "$project" ]; then
+                  projName=$(basename "$project")
+                  # Checks if .ProjectName is there, so probably we can add the method
+                  # TODO: Read the file, check if it exists, because if not, it'll fail 
+                  if [ -f "${project}/.${projName}" ]; then
+                      echo "${projName}_help" >> "$helpFile"
+                  fi
+              fi
+          done
+      else
+          echo "No projects found in ${SAINT_PROJECTS_FOLDER}."
+      fi
+  fi
+
+  saint_msg "${YELLOW}saint_help${NC} commands updated successfully in ${helpFile}."
+}
