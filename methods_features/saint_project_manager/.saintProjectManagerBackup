@@ -1,0 +1,63 @@
+#!/bin/bash
+
+saint_projects_backup() {
+    # Define the source directory and the backup directory
+    local source_dir="${SAINT_PROJECTS_FOLDER}"
+    local backup_dir="${PROJECT_PATH}/backups"
+
+    # Create the backup directory if it does not exist
+    mkdir -p "$backup_dir"
+
+    # Create a timestamp for the backup file
+    local timestamp=$(date +"%Y%m%d_%H%M%S")
+
+    # Define the backup file name
+    local backup_file="${backup_dir}/projects_backup_${timestamp}.tar.gz"
+
+    # Create the backup using tar
+    tar -czf "$backup_file" -C "$source_dir" .
+
+    # Check if the backup was created successfully
+    if [ -f "$backup_file" ]; then
+        saint_msg "Backup created successfully: $backup_file"
+    else
+        saint_msg "Backup failed."
+    fi
+}
+
+saint_restore_backup() {
+    # Define the backup directory
+    local backup_dir="${PROJECT_PATH}/backups"
+
+    # List available backups
+    echo "Available backups:"
+    ls -1 "${backup_dir}/projects_backup_*.tar.gz" "${backup_dir}/saint_temp_backup_*.tar.gz"
+    
+    # Prompt user to enter the name of the backup files to restore
+    read -p "Enter the name of the projects backup file to restore: " projects_backup_file
+    read -p "Enter the name of the saint_temp backup file to restore: " temp_backup_file
+
+    # Define the restore directories
+    local projects_restore_dir="${PROJECT_PATH}/projects"
+    local temp_restore_dir="${PROJECT_PATH}/saint_temp"
+
+    # Check if the specified backup files exist
+    if [ -f "${backup_dir}/${projects_backup_file}" ] && [ -f "${backup_dir}/${temp_backup_file}" ]; then
+        # Create the restore directories if they do not exist
+        mkdir -p "$projects_restore_dir"
+        mkdir -p "$temp_restore_dir"
+
+        # Unpack the backups
+        tar -xzf "${backup_dir}/${projects_backup_file}" -C "$projects_restore_dir"
+        tar -xzf "${backup_dir}/${temp_backup_file}" -C "$temp_restore_dir"
+
+        # Check if the unpacking was successful
+        if [ $? -eq 0 ]; then
+            saint_msg "Backups restored successfully."
+        else
+            saint_msg "Backup restoration failed."
+        fi
+    else
+        saint_msg "One or both of the specified backup files do not exist."
+    fi
+}
