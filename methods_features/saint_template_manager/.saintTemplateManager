@@ -61,9 +61,9 @@ saint_create_project_variables_template() {
   local projPathProp=$2
   local fileTemplate=".variables.txt"
   local projectFileOutput=".variables"
-  local newProjectPath="newProjPath=\"${projPathProp:-~/${newProjName}}\""
+  local newProjectPath="newProjPath=${projPathProp:-~/${newProjName}}"
   saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
-  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput} "${projectPathPropVar}"
+  saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput} "${newProjectPath}"
   echo ""
 }
 
@@ -74,7 +74,7 @@ saint_create_project_alias_template() {
   local aliasName=${${aliasNameProp}:-${newProjName}Cmd} #sets up a pattern one only if the comand is empty
   local fileTemplate=".alias.txt"
   local projectFileOutput=".alias"
-  local aliasNameChoice="aliasName=\"${aliasName}\""
+  local aliasNameChoice="aliasName=${aliasName}"
   saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
   # Setting up .alias file
   

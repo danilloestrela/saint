@@ -1,5 +1,5 @@
-#!/bin/bash                                          
-# Specific variables to ${newProjName}               
+#!/bin/bash
+# Specific variables to ${newProjName}
 # Here you can define env variables and other configs
-                                                     
-local ${newProjName}Path=${newProjPath}              
+
+local ${newProjName}Path=${newProjPath}
