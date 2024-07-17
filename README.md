@@ -58,3 +58,8 @@ I am not sure yet how the installation would work on a Mac (since I don't have o
 - [ ] Create a debugger for errors, enabling or disabling code errors.
 - [ ] Add a delete setup capable of selecting one of the projects from the list (project folder) and removing it instead of typing its name.
 - [ ] Add details on how to install Saint on Mac whenever the terminal starts, avoiding manual use of `source` in the terminal.
+- [ ] Create a Saint Backup command
+
+Done so far:
+- [x] Create a new templating method approach
+- [x] Fix bugs related to no-project states
