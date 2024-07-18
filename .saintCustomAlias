@@ -3,4 +3,19 @@
 # Saint Custom Alias
 
 alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+
+# docker aliases
+alias dc="docker compose"
+alias dcd="docker compose down"
+alias dcl="docker compose logs"
+alias dclf="dcl -f"
+alias dcs="docker compose stop"
+alias dcu="docker compose up -d"
+alias dcr="docker compose run --rm"
 alias dfrm='docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q) && docker rmi $(docker images -a -q) && docker system prune -a --volumes'
+alias di="docker images"
+alias dl="docker logs -f"
+alias dps='docker ps --format="table {{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}"'
+alias dpsa="dps -a"
+alias dsp="docker system prune"
+alias sqlup="code && docker-compose up -d"
