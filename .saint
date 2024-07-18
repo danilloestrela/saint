@@ -13,6 +13,8 @@ saint () {
 
   #Config
   local projectCommand=$0
+  # Adds saint custom Alias
+  source ${PROJECT_PATH}/.saintCustomAlias
   
   # Other projects variables required
   source ${PROJECT_PATH}/.saintVariables
