@@ -19,6 +19,16 @@ saint_invalid_command () {
     saint_msg "'${RED}$invalidCommand${NC}' :: Not a valid command in '$parentCommand'."
 };
 
+# Function to check if an alias exists
+saint_has_alias() {
+  local aliasName=$1
+  if alias "$aliasName" &>/dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Maybe this is unecessary, I'm still testing. Idk, you tell me.
 # Function to run the command and return to the original directory if it fails
 saint_run_command() {

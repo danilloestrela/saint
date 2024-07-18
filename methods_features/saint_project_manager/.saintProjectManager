@@ -9,7 +9,15 @@ saint_add_new_project() {
   
   read "newProjectPath?Enter the path for ${YELLOW_BOLD}${newProjName}${NC} (default: ~/${newProjName}): "  
   # Checking with the user if he wants to create a custom alias for CLI
-  read "aliasNameChoice?Please, type the name of the alias you want to set up for ${YELLOW_BOLD}${newProjName}${NC} (default: ${newProjName}Cmd): "
+  while true; do 
+    read "aliasNameChoice?Please, type the name of the alias you want to set up for ${YELLOW_BOLD}${newProjName}${NC} (default: ${newProjName}Cmd): "
+    if saint_has_alias "${aliasNameChoice}"; then
+      saint_msg "Alias name ${YELLOW}'${aliasNameChoice}'${NC} ${RED}already exists${NC}. Please try again. (ctrl or command + c to cancel)"
+    else
+      break
+    fi
+  done
+
   # Check if newProjName is empty
   if [ -z "$newProjName" ]; then
     saint_msg "${RED}No project name entered. Exiting.${NC}"
