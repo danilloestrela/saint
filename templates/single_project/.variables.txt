@@ -3,3 +3,8 @@
 # Here you can define env variables and other configs
 
 local ${newProjName}Path=${newProjPath}
+
+# Template of help
+thisLocation=$(dirname "$0")
+${projNameUppercased}_HELP_FILE="${thisLocation}/.help_descriptions"
+${projNameUppercased}_SCRIPT_FILE="${thisLocation}/.${newProjName}"
