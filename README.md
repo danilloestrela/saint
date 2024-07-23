@@ -61,9 +61,9 @@ I am not sure yet how the installation would work on a Mac (since I don't have o
 - [ ] Add a delete setup capable of selecting one of the projects from the list (project folder) and removing it instead of typing its name.
 - [ ] Add details on how to install Saint on Mac whenever the terminal starts, avoiding manual use of `source` in the terminal.
 - [ ] Create a Saint Backup command
-- [ ] Fix template bug that new line is not scapped properly and end up beeing printed after creating a new project on the .project file.
 - [ ] Add temp custom file for custom general aliases between the projects (this way we don't get lost searching for something that should be global)
 
 Done so far:
 - [x] Create a new templating method approach
 - [x] Fix bugs related to no-project states
+- [x] Fix template bug that new line is not scapped properly and end up beeing printed after creating a new project on the .project file.
