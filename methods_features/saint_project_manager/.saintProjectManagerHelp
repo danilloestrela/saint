@@ -1,0 +1,154 @@
+#!/bin/bash
+
+saint_project_help() {
+    local help_file="$1"
+    local project_name="$2"
+    local max_default_command_length=15
+    local max_command_length=0
+    local padding=2
+    local current_main_group=""
+    local current_sub_group=""
+
+    if [ -f "$help_file" ]; then
+        if [ -s "$help_file" ]; then
+            # Calculate the maximum length of the commands for alignment
+            while IFS=: read -r main_group sub_group command description; do
+                command_length=${#command}
+                if (( command_length > max_command_length )); then
+                    max_command_length=$command_length
+                fi
+            done < "$help_file"
+        else
+            # Set a fixed value if the file is empty
+            max_command_length=10 
+        fi
+    fi
+
+    # Print the help header
+    printf "${GREEN}%-*s${NC}%*s%s\n" $max_default_command_length "$project_name" $padding "Available commands for $project_name." "$description"
+    printf "   |- ${YELLOW}%-*s${NC}%*s%s\n" $max_default_command_length "help" $padding "Shows help commands for $project_name" "$description"
+    printf "   |- ${YELLOW}%-*s${NC}%*s%s\n" $max_default_command_length "update-help" $padding "Manually updates help commands (from comments)" "$description"
+    
+    # Print the commands and descriptions aligned and grouped
+    if [ -f "$help_file" ]; then
+        local subgroup_spaces=""
+        while IFS=: read -r main_group sub_group command description; do
+            if [[ "$main_group" != "$current_main_group" ]]; then
+                if [[ "$current_main_group" != "" ]]; then
+                    echo -e ""
+                fi
+                echo -e "    ${GREEN}${main_group}${NC}"
+                current_main_group=$main_group
+                current_sub_group=""
+            fi
+            if [[ "$sub_group" != "$current_sub_group" && "$sub_group" != "General" ]]; then
+                echo -e "       ${GREEN}${sub_group}${NC}"
+                current_sub_group=$sub_group
+                subgroup_spaces="    "
+            fi
+            printf "     ${subgroup_spaces}|- ${YELLOW}%-*s${NC}%*s%s\n" $max_command_length "$command" $padding "" "$description"
+        done < "$help_file"
+    else
+        saint_msg "No help file yet. You can start by running the command update-help"
+        saint_msg "To make a new help command on your project folder you can:"
+        echo -e "Add a comment like the following: ${YELLOW}'#@help mainGroup!subGroup!nameOfCommand: Description'${NC}"
+        echo -e "If you don't add ${YELLOW}'mainGroup!subGroup!'${NC} then it'll add to a group called ${YELLOW}'General'${NC}"
+        echo -e "${RED}WARNING: This will only be added through some functions. Check your project folder for more.${NC}"
+    fi
+}
+
+
+saint_initialize_project_help_file() {
+    local help_file="$1"
+    if [ ! -f "$help_file" ]; then
+        saint_msg "Creating help file at ${help_file}"
+        touch "$help_file" || { saint_msg "Failed to create help file at ${help_file}"; exit 1; }
+    else
+        saint_msg "Help file already exists at ${help_file}"
+    fi
+}
+
+saint_project_add_help() {
+    local help_file="$1"
+    local main_group="$2"
+    local sub_group="$3"
+    local command="$4"
+    local description="$5"
+    saint_msg "${YELLOW}------------------------------------------------------------------------------------${NC}"
+    saint_msg "Adding help infos: $main_group | $sub_group | $command: $description"
+    saint_msg "${YELLOW}------------------------------------------------------------------------------------${NC}"
+    echo "$main_group:$sub_group:$command:$description" >> "$help_file"
+}
+
+saint_project_update_help() {
+    local help_file="$1"
+    local script_file="$2"
+    local functions=("${@:3}")
+
+    initialize_help_file "$help_file"
+    echo -e ""
+    saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Clearing help file at $help_file"
+    : > "$help_file" # Clear existing help file
+    if [ $? -ne 0 ]; then
+        saint_msg "Failed to clear help file at $help_file"
+        exit 1
+    fi
+
+    saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Starting to parse functions"
+    saint_msg "SCRIPT_FILE: $script_file"
+
+    if [ ! -f "$script_file" ]; then
+        saint_msg "Script file does not exist: $script_file"
+        exit 1
+    fi
+
+    capturing=false
+    current_function=""
+
+    while IFS= read -r line; do
+        # Check for function definition
+        if [[ $line =~ ^[a-zA-Z_][a-zA-Z0-9_]*\(\)[[:space:]]* ]]; then
+            function_name=$(echo $line | cut -d '(' -f 1)
+            if [[ " ${functions[*]} " == *" $function_name "* ]]; then
+                current_function=$function_name
+                capturing=true
+                saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Capturing help comments from current definition: $current_function"
+            else
+                capturing=false
+            fi
+        elif $capturing && [[ $line =~ ^[[:space:]]*#@help ]]; then
+            saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Found help comment in $current_function"
+            comment=${line#*#@help }
+
+            # Set default values for groups
+            main_group="General"
+            sub_group="General"
+            rest=$comment
+
+            # Extract main group if present
+            if [[ $comment == *!* ]]; then
+                main_group=${comment%%!*}
+                rest=${comment#*!}
+            fi
+
+            # Extract sub group if present
+            if [[ $rest == *!* ]]; then
+                sub_group=${rest%%!*}
+                rest=${rest#*!}
+            fi
+
+            command=${rest%%:*}
+            description=${rest#*: }
+            
+            saint_msg "Processing help comment: main_group='$main_group', sub_group='$sub_group', command='$command', description='$description'"
+            saint_project_add_help "$help_file" "$main_group" "$sub_group" "$command" "$description"
+        fi
+    done < "$script_file"
+
+    if [ $? -ne 0 ]; then
+        saint_msg "Failed to read script file at $script_file"
+        exit 1
+    fi
+
+    saint_msg "${GREEN}HELP UPDATE${NC} :: Help file Updated!"
+}

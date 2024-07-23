@@ -125,3 +125,5 @@ saint_delete_project() {
 }
 
 source "${PROJECT_PATH}/methods_features/saint_project_manager/.saintProjectManagerBackup"
+source "${PROJECT_PATH}/methods_features/saint_project_manager/.saintProjectManagerHelp"
+
