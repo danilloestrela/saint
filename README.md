@@ -53,17 +53,17 @@ I am not sure yet how the installation would work on a Mac (since I don't have o
 - [ ] On help manager: make it more safe by having him to confirm that there is a help method in project folder before rebuilding.
 - [ ] Add a function to automate Saint installation on any Linux/Mac/WSL.
 - [ ] Create a file with supported Operating Systems (as tested by the community).
-- [ ] Optimize helpers to avoid compromising projects from older versions (preferably).
 - [ ] Add common aliases for any project (more Docker commands?).
-- [ ] Enhance the ability to create aliases for subprojects within the main project folder during project addition.
+  - For this task: You need to create a temp file that user can add global aliases, and avoid it to be got from git (as a modified file or w/e)
 - [ ] Improve automatic project installation with `git clone`.
 - [ ] Create a debugger for errors, enabling or disabling code errors.
-- [ ] Add a delete setup capable of selecting one of the projects from the list (project folder) and removing it instead of typing its name.
 - [ ] Add details on how to install Saint on Mac whenever the terminal starts, avoiding manual use of `source` in the terminal.
 - [ ] Create a Saint Backup command
-- [ ] Add temp custom file for custom general aliases between the projects (this way we don't get lost searching for something that should be global)
+- [ ] Create a way to use arrows to select something. This can be done as a helper under `helper_features/saint_select_option`
 
-Done so far:
+#### Done so far:
 - [x] Create a new templating method approach
 - [x] Fix bugs related to no-project states
 - [x] Fix template bug that new line is not scapped properly and end up beeing printed after creating a new project on the .project file.
+- [x] Optimize helpers to avoid compromising projects from older versions (preferably).
+- [x] Add a delete setup capable of selecting one of the projects from the list (project folder) and removing it instead of typing its name.
