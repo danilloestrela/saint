@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Function to get the current git branch
+saint_get_git_branch() {
+    local project_dir="$1"
+    if [ -d "$project_dir/.git" ]; then
+        pushd "$project_dir" > /dev/null || { echo "Failed to enter directory: $project_dir"; return; }
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        saint_msg "Project: ${YELLOW}$(basename "$project_dir")${NC} :::: Current Branch: ${YELLOW}$branch${NC}"
+        popd > /dev/null || { echo "Failed to return to previous directory"; return; }
+    else
+        echo "Directory $project_dir is not a git repository."
+    fi
+}

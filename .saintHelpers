@@ -58,4 +58,5 @@ saint_print_help() {
 
 source "${PROJECT_PATH}/helper_features/saint_cd_helpers/.saintCdHelpers"
 source "${PROJECT_PATH}/helper_features/saint_docker_helpers/.saintDockerHelpers"
+source "${PROJECT_PATH}/helper_features/saint_git_helpers/.saintGitHelpers"
 source "${PROJECT_PATH}/helper_features/saint_select_option/.saintSelectOption"
