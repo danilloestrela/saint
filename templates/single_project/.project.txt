@@ -7,12 +7,12 @@
 thisLocation=$(dirname "$0")
 
 # Function to update help by parsing comments
-${newProjName}_update_help() {
+${newProjName}_help() {
     saint_project_help ${${projNameUppercased}_HELP_FILE} ${newProjName}
 }
 
 # Function to show help
-${newProjName}_help() {
+${newProjName}_update_help() {
   saint_project_update_help ${${projNameUppercased}_HELP_FILE} ${${projNameUppercased}_SCRIPT_FILE} \
   "${newProjName}_code" "${newProjName}_goto" "${newProjName}_run" "${newProjName}_install"
 }
