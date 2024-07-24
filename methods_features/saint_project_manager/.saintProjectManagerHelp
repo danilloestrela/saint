@@ -84,7 +84,7 @@ saint_project_update_help() {
     local script_file="$2"
     local functions=("${@:3}")
 
-    initialize_help_file "$help_file"
+    saint_initialize_project_help_file "$help_file"
     echo -e ""
     saint_msg "[...] ${GREEN}HELP UPDATE${NC} :: Clearing help file at $help_file"
     : > "$help_file" # Clear existing help file
