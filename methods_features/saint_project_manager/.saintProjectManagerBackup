@@ -61,3 +61,54 @@ saint_restore_backup() {
         saint_msg "One or both of the specified backup files do not exist."
     fi
 }
+
+saint_project_backup() {
+    # Define the source directory and the backup directory
+    saint_msg "Hey, select one of the options to ${GREEN}backup${NC} a project:"
+  
+    # Projects from folders
+    local all_projects_avaliable=()
+    for project in "$SAINT_PROJECTS_FOLDER"/*; do
+      if [ -d "$project" ]; then
+        local projName=$(basename "$project")
+        all_projects_avaliable+=("$projName")
+      fi
+    done
+    
+    # Select a project to be deleted
+    backupProjectName=$(saint_select_option "${all_projects_avaliable[@]}")
+
+    # checks selection
+    if [ -z "$backupProjectName" ]; then
+      saint_msg "No project selected."
+      return 1
+    fi
+
+    local source_dir="${SAINT_PROJECTS_FOLDER}/${backupProjectName}"
+    local backup_dir="${PROJECT_PATH}/backups"
+
+    # Check if the project directory exists
+    if [ ! -d "$source_dir" ]; then
+        saint_msg "Project directory does not exist: $source_dir"
+        return 1
+    fi
+
+    # Create the backup directory if it does not exist
+    mkdir -p "$backup_dir"
+
+    # Create a timestamp for the backup file
+    local timestamp=$(date +"%Y%m%d_%H%M%S")
+
+    # Define the backup file name
+    local backup_file="${backup_dir}/project_backup_${backupProjectName}_${timestamp}.tar.gz"
+
+    # Create the backup using tar
+    tar -czf "$backup_file" -C "$source_dir" .
+
+    # Check if the backup was created successfully
+    if [ -f "$backup_file" ]; then
+        saint_msg "Backup created successfully: $backup_file"
+    else
+        saint_msg "Backup failed."
+    fi
+}

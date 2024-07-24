@@ -2,6 +2,7 @@
 
     case $1 in
         add) saint_add_new_project ${@:2} ;;
+        backup) saint_project_backup ;;
         delete) saint_delete_project ;;
         edit) code ${PROJECT_PATH};;
         list) saint_project_list ;;
