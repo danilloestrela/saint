@@ -7,6 +7,7 @@ saint_help() {
   echo -e ""
   echo -e "${YELLOW}${projectName} commands:${NC}"
   saint_print_help "add" "Add a new project"
+  saint_print_help "backup" "Creates a backup for a selected project"
   saint_print_help "delete" "Delete an existing project"
   saint_print_help "edit" "Edit the Saint script"
   saint_print_help "list" "List all projects"
