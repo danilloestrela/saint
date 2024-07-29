@@ -12,6 +12,7 @@ fi
 saint () {
 
   #Config
+  #  projectCommand should be used as a string to show the method command.
   local projectCommand='saint'
   # Adds saint custom Alias
   source ${PROJECT_PATH}/.saintCustomAlias
