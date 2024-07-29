@@ -12,5 +12,5 @@
         #BEGIN-MAIN-COMMANDS
         #END-MAIN-COMMANDS
         "") saint_msg "Saint is ${GREEN_BOLD}running${NC}  🤖";;
-        *) saint_invalid_command "saint" $1 ;;
+        *) saint_invalid_command ${projectCommand} $1 ;;
     esac 

@@ -43,7 +43,7 @@ saint_get_project_list_from_folders_array() {
 
 saint_add_command() {
   local project_name=$1
-  local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\$0 \$1\" \${@:2};;"
+  local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\${projectCommand} \$1\" \${@:2};;"
   if ! grep -q "${command}" ${SAINT_METHODS_MAIN_COMMANDS_FILE}; then
     sed -i "/#BEGIN-MAIN-COMMANDS/a ${command}" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
   fi
@@ -52,7 +52,7 @@ saint_add_command() {
 
 saint_remove_command() {
   local project_name=$1
-  local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\$0 \$1\" \${@:2};;"
+  local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\${projectCommand} \$1\" \${@:2};;"
   sed -i "\|${command}|d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
 }
 
