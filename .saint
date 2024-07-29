@@ -12,7 +12,7 @@ fi
 saint () {
 
   #Config
-  local projectCommand=$0
+  local projectCommand='saint'
   # Adds saint custom Alias
   source ${PROJECT_PATH}/.saintCustomAlias
   
