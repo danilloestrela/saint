@@ -57,3 +57,13 @@ saint_rebuild_help() {
 
   saint_msg "${YELLOW}saint_help${NC} commands updated successfully in ${helpFile}."
 }
+
+saint_print_help() {
+    local command=$1
+    local description=$2
+    local command_color=${3:-$GREEN}  # Default color for command is GREEN
+    local description_color=${4:-$YELLOW}  # Default color for description is YELLOW
+    local max_command_length=${5:-20}  # Default maximum command length is 20
+
+    printf "${command_color}%-${max_command_length}s${NC} - ${description_color}%s${NC}\n" "${command}" "${description}"
+}

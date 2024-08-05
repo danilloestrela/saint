@@ -120,6 +120,6 @@ saint_initialize_main_commands() {
   fi
 }
 
-source "${PROJECT_PATH}/methods_features/saint_help_manager/.saintHelpManager"
-source "${PROJECT_PATH}/methods_features/saint_template_manager/.saintTemplateManager"
-source "${PROJECT_PATH}/methods_features/saint_project_manager/.saintProjectManager"
+source "${PROJECT_PATH}/features/methods/saint_help_manager/.saintHelpManager"
+source "${PROJECT_PATH}/features/methods/saint_template_manager/.saintTemplateManager"
+source "${PROJECT_PATH}/features/methods/saint_project_manager/.saintProjectManager"

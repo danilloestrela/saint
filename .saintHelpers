@@ -46,17 +46,25 @@ saint_run_command() {
   cd "$orig_dir"
 }
 
-saint_print_help() {
-    local command=$1
-    local description=$2
-    local command_color=${3:-$GREEN}  # Default color for command is GREEN
-    local description_color=${4:-$YELLOW}  # Default color for description is YELLOW
-    local max_command_length=${5:-20}  # Default maximum command length is 20
+# Function to handle read command for both Bash and Zsh
+saint_read() {
+  local var_name="$1"
+  local prompt="$2"
+  local input
 
-    printf "${command_color}%-${max_command_length}s${NC} - ${description_color}%s${NC}\n" "${command}" "${description}"
+  if [ -n "$BASH_VERSION" ]; then
+    # For Bash
+    read -p "$prompt" input
+  elif [ -n "$ZSH_VERSION" ]; then
+    # For Zsh
+    read -r "$var_name?$prompt"
+    return
+  fi
+
+  eval "$var_name='$input'"
 }
 
-source "${PROJECT_PATH}/helper_features/saint_cd_helpers/.saintCdHelpers"
-source "${PROJECT_PATH}/helper_features/saint_docker_helpers/.saintDockerHelpers"
-source "${PROJECT_PATH}/helper_features/saint_git_helpers/.saintGitHelpers"
-source "${PROJECT_PATH}/helper_features/saint_select_option/.saintSelectOption"
+source "${PROJECT_PATH}/features/helpers/saint_cd_helpers/.saintCdHelpers"
+source "${PROJECT_PATH}/features/helpers/saint_docker_helpers/.saintDockerHelpers"
+source "${PROJECT_PATH}/features/helpers/saint_git_helpers/.saintGitHelpers"
+source "${PROJECT_PATH}/features/helpers/saint_select_option/.saintSelectOption"
