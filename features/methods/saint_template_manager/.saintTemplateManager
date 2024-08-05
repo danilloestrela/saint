@@ -71,7 +71,12 @@ saint_create_project_variables_template() {
 saint_create_project_alias_template() {
   local newProjName=$1
   local aliasNameProp=$2
-  local aliasName=${${aliasNameProp}:-${newProjName}Cmd} #sets up a pattern one only if the comand is empty
+  local aliasName='' #sets up a pattern one only if the comand is empty
+  if [ -n "$aliasNameProp" ]; then
+    aliasName="$aliasNameProp"
+  else
+    aliasName="${newProjName}Cmd"
+  fi
   local fileTemplate=".alias.txt"
   local projectFileOutput=".alias"
   local aliasNameChoice="aliasName=${aliasName}"
