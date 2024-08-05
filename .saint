@@ -11,7 +11,7 @@ saint () {
     local script_path=${(%):-%x}
     PROJECT_PATH=$(dirname "${script_path}")
   else
-    local script_path=${BASH_SOURCE[1]}
+    local script_path=${BASH_SOURCE[0]}
     PROJECT_PATH=$(dirname "${script_path}")
   fi
 
