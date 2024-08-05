@@ -4,21 +4,23 @@
 # It is absolutely forbidden to change "BRAINILLO_FIRST_EXECUTION" variable name.
 BRAINILLO_FIRST_EXECUTION=true
 
-if [ -n "$ZSH_VERSION" ]; then
-    PROJECT_PATH=$(dirname "$0:A")
-else
-    PROJECT_PATH=$(dirname "${BASH_SOURCE[0]}")
-fi
-
-if [ -s "$PROJECT_PATH/.env" ]; then
-  export $(egrep -v '^#' ${PROJECT_PATH}/.env | xargs) > /dev/null
-fi
-
 saint () {
+  # Config
 
-  #Config
+  if [ -n "$ZSH_VERSION" ]; then
+    local script_path=${(%):-%x}
+    PROJECT_PATH=$(dirname "${script_path}")
+  else
+    local script_path=${BASH_SOURCE[1]}
+    PROJECT_PATH=$(dirname "${script_path}")
+  fi
+
+  if [ -s "$PROJECT_PATH/.env" ]; then
+    export $(egrep -v '^#' ${PROJECT_PATH}/.env | xargs) > /dev/null
+  fi
   #  projectCommand should be used as a string to show the method command.
   local projectCommand='saint'
+
   # Adds saint custom Alias
   source ${PROJECT_PATH}/.saintCustomAlias
   

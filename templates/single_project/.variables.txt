@@ -5,6 +5,15 @@
 local ${newProjName}Path=${newProjPath}
 
 # Template of help
-thisLocation=$(dirname "$0")
+local thisLocation=''
+
+if [ -n "$ZSH_VERSION" ]; then
+    local script_path=${(%):-%x}
+    thisLocation=$(dirname "${script_path}")
+else
+    local script_path=${BASH_SOURCE[1]}
+    thisLocation=$(dirname "${script_path}")
+fi
+
 ${projNameUppercased}_HELP_FILE="${thisLocation}/.help_descriptions"
 ${projNameUppercased}_SCRIPT_FILE="${thisLocation}/.${newProjName}"
