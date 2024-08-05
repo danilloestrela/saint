@@ -3,7 +3,12 @@
 # TODO: Let the user choose what he wants, automatically install everything(git clone projects), or manually (choose the path before clonning each) 
 # It is absolutely forbidden to change "BRAINILLO_FIRST_EXECUTION" variable name.
 BRAINILLO_FIRST_EXECUTION=true
-PROJECT_PATH=$(dirname "$0")
+
+if [ -n "$ZSH_VERSION" ]; then
+    PROJECT_PATH=$(dirname "$0:A")
+else
+    PROJECT_PATH=$(dirname "${BASH_SOURCE[0]}")
+fi
 
 if [ -s "$PROJECT_PATH/.env" ]; then
   export $(egrep -v '^#' ${PROJECT_PATH}/.env | xargs) > /dev/null
