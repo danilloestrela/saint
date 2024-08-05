@@ -59,7 +59,7 @@ I am not sure yet how the installation would work on a Mac (since I don't have o
 - [ ] Create a debugger for errors, enabling or disabling code errors.
 - [ ] Add details on how to install Saint on Mac whenever the terminal starts, avoiding manual use of `source` in the terminal.
 - [ ] Create a Saint Backup command
-- [ ] Create a way to use arrows to select something. This can be done as a helper under `helper_features/saint_select_option`
+- [ ] Create a way to use arrows to select something. This can be done as a helper under `features/helpers/saint_select_option`
 
 #### Done so far:
 - [x] Create a new templating method approach

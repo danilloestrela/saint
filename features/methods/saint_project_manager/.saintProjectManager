@@ -4,13 +4,13 @@ saint_add_new_project() {
   local newProjName=$1
   saint_msg "Hey, lets start to ${GREEN}install a new project${NC}!"
   if [ ! -n "$newProjName" ]; then
-    read "newProjName?Enter new project name: "
+    saint_read "newProjName" "Enter new project name: "
   fi
   
-  read "newProjectPath?Enter the path for ${YELLOW_BOLD}${newProjName}${NC} (default: ~/${newProjName}): "  
+  saint_read "newProjectPath" "Enter the path for ${YELLOW_BOLD}${newProjName}${NC} (default: ~/${newProjName}): "  
   # Checking with the user if he wants to create a custom alias for CLI
   while true; do 
-    read "aliasNameChoice?Please, type the name of the alias you want to set up for ${YELLOW_BOLD}${newProjName}${NC} (default: ${newProjName}Cmd): "
+    saint_read "aliasNameChoice" "Please, type the name of the alias you want to set up for ${YELLOW_BOLD}${newProjName}${NC} (default: ${newProjName}Cmd): "
     if saint_has_alias "${aliasNameChoice}"; then
       saint_msg "Alias name ${YELLOW}'${aliasNameChoice}'${NC} ${RED}already exists${NC}. Please try again. (ctrl or command + c to cancel)"
     else
@@ -124,6 +124,6 @@ saint_delete_project() {
   fi
 }
 
-source "${PROJECT_PATH}/methods_features/saint_project_manager/.saintProjectManagerBackup"
-source "${PROJECT_PATH}/methods_features/saint_project_manager/.saintProjectManagerHelp"
+source "${PROJECT_PATH}/features/methods/saint_project_manager/.saintProjectManagerBackup"
+source "${PROJECT_PATH}/features/methods/saint_project_manager/.saintProjectManagerHelp"
 
