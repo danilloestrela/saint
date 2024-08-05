@@ -34,7 +34,7 @@ saint_create_project_from_template() {
     done
   fi
 
-  # Writing writing new contents on the path
+  # Writing new contents on the path
   echo "$templateContent" > "$fileNameWithPath"
 
   # Checking if file was created
