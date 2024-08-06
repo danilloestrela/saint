@@ -5,16 +5,25 @@ alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
 
 # docker aliases
 alias dc="docker compose"
+alias dcun="docker compose up"
+alias dcu="docker compose up -d"
 alias dcd="docker compose down"
+alias dcs="docker compose stop"
 alias dcl="docker compose logs"
 alias dclf="dcl -f"
-alias dcs="docker compose stop"
-alias dcu="docker compose up -d"
 alias dcr="docker compose run --rm"
-alias dfrm='docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q) && docker rmi $(docker images -a -q) && docker system prune -a --volumes'
-alias di="docker images"
+# stop all containers available
+alias dsa="docker stop $(docker ps -a -q)"
+# remove all stopped containers
+alias drma="docker rm $(docker ps -a -q)"
+# remove all images (not running) from docker
+alias drmia="docker rmi $(docker images -a -q)"
+# Prune all volumes from docker
+alias drmv="docker system prune -a --volumes"
+# Full clean docker to start over
+alias dfrm="dsa && drma && drmia && drmv"
+alias dsp="docker system prune"
 alias dl="docker logs -f"
+alias di="docker images"
 alias dps='docker ps --format="table {{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Names}}"'
 alias dpsa="dps -a"
-alias dsp="docker system prune"
-alias sqlup="code && docker-compose up -d"
