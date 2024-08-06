@@ -58,10 +58,10 @@ I am not sure yet how the installation would work on a Mac (since I don't have o
 - [ ] Improve automatic project installation with `git clone`.
 - [ ] Create a debugger for errors, enabling or disabling code errors.
 - [ ] Add details on how to install Saint on Mac whenever the terminal starts, avoiding manual use of `source` in the terminal.
-- [ ] Create a Saint Backup command
 - [ ] Create a way to use arrows to select something. This can be done as a helper under `features/helpers/saint_select_option`
 
 #### Done so far:
+- [x] Create a Saint Backup command
 - [x] Create a new templating method approach
 - [x] Fix bugs related to no-project states
 - [x] Fix template bug that new line is not scapped properly and end up beeing printed after creating a new project on the .project file.
