@@ -3,6 +3,11 @@
 Saint is a project manager made in bash/shell.
 
 It was initially created to facilitate the organization of my projects in WSL2. Over time, it gained structure and an architecture to handle the automatic creation and removal of projects, as well as simple and unique aliases for each project. This allows you to manage any project easily from any folder in the terminal, saving time when creating and editing common elements in programming projects.
+### Supported Operation Systems
+![Linux](https://img.shields.io/badge/Linux-000?style=for-the-badge&logo=linux&logoColor=FCC624)
+![Ubuntu](https://img.shields.io/badge/Ubuntu-35495E?style=for-the-badge&logo=ubuntu&logoColor=2CA5E0)
+![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0)
+![WSL2](https://img.shields.io/badge/WSL2-blue)
 
 ### Installation Guide:
 #### Linux (Ubuntu/WSL)
@@ -82,20 +87,18 @@ To install Saint on a Mac, follow these steps:
     - `exampleProj_code()`
     - `exampleProj_run()`
 
-## TODOs:
-- [ ] Create a README explaining the architecture and the "whys" of each folder. (Always open to think differently about the architecture)
-- [ ] On help manager: make it more safe by having him to confirm that there is a help method in project folder before rebuilding.
-- [ ] Add a function to automate Saint installation on any Linux/Mac/WSL.
-- [ ] Create a file with supported Operating Systems (as tested by the community).
-- [ ] Add common aliases for any project (more Docker commands?).
-  - For this task: You need to create a temp file that user can add global aliases, and avoid it to be got from git (as a modified file or w/e)
-- [ ] Improve automatic project installation with `git clone`.
-- [ ] Create a debugger for errors, enabling or disabling code errors.
-
-- [ ] Create a way to use arrows to select something. This can be done as a helper under `features/helpers/saint_select_option`
+## CORE TODOs:
+- [ ] [#1 Explain the architecture and the "whys" of each folder.](https://github.com/danilloestrela/saint/issues/1)
+- [ ] [#2 Make setup easier: setup to automate Saint installation on any Linux/Mac/WSL.](https://github.com/danilloestrela/saint/issues/2)
+- [ ] [#3 Add common aliases for any project by creating a temp aliases file](https://github.com/danilloestrela/saint/issues/3)
+- [ ] [#4 Create a debugger for errors, enabling or disabling code errors.](https://github.com/danilloestrela/saint/issues/4) 
+- [ ] [#6 Method that allows arrows to select some option instead of using a list and input to select](https://github.com/danilloestrela/saint/issues/6) 
+- [ ] [#7 Check updates for saint automatically](https://github.com/danilloestrela/saint/issues/7)
+- [ ] [#8 Restore a project previously created backup](https://github.com/danilloestrela/saint/issues/8) 
 
 #### Done so far:
-- [x] Add details on how to install Saint on Mac whenever the terminal starts, avoiding manual use of `source` in the terminal.
+- [x] [#5 Add details on how to install Saint on Mac whenever the terminal starts](https://github.com/danilloestrela/saint/issues/5)
+- [x] Add supported OS for this project.
 - [x] Create a Saint Backup command
 - [x] Create a new templating method approach
 - [x] Fix bugs related to no-project states
