@@ -5,8 +5,8 @@ Saint is a project manager made in bash/shell.
 It was initially created to facilitate the organization of my projects in WSL2. Over time, it gained structure and an architecture to handle the automatic creation and removal of projects, as well as simple and unique aliases for each project. This allows you to manage any project easily from any folder in the terminal, saving time when creating and editing common elements in programming projects.
 
 ### Installation Guide:
-#### Linux (Ubuntu)
-1. Copy Saint to your user's root directory.
+#### Linux (Ubuntu/WSL)
+1. Clone Saint to your user's root directory. (`~/`).
 2. In the user root, locate the .bashrc file.
 3. Use "nano" or your preferred editor to add the following code at the end of the file:
     ```
@@ -18,7 +18,41 @@ It was initially created to facilitate the organization of my projects in WSL2. 
 5. After that, restart the terminal. If you see the message: `Saint is running`, then it's ready to use.
 
 #### Mac
-I am not sure yet how the installation would work on a Mac (since I don't have one). I am open to finding out and adding instructions here as soon as possible.
+To install Saint on a Mac, follow these steps:
+
+1. Clone Saint to your user's root directory. (`~/`).
+
+2. Open the Terminal and check if the `.zshrc` file exists in your home directory:
+    ```bash
+    ls -la ~ | grep .zshrc
+    ```
+    If the file does not exist, create it with the following command:
+    ```bash
+    touch ~/.zshrc
+    ```
+
+3. Edit the `.zshrc` file with a text editor of your choice:
+    - Using `nano`:
+      ```bash
+      nano ~/.zshrc
+      ```
+    - Using `vim`:
+      ```bash
+      vim ~/.zshrc
+      ```
+    - Using `Visual Studio Code`:
+      ```bash
+      code ~/.zshrc
+      ```
+
+4. Add the following code at the end of the `.zshrc` file to source Saint whenever a terminal session starts:
+    ```bash
+    if [ -s ~/saint/.saint ]; then
+        . ~/saint/.saint
+    fi
+    ```
+
+5. Save the file and restart the terminal. If you see the message `Saint is running`, then Saint is successfully installed and ready to use.
 
 ### Some Observations:
 1. Originally, I edited Saint using Visual Studio Code, but you are free to enhance it with the IDE of your choice.
@@ -57,10 +91,11 @@ I am not sure yet how the installation would work on a Mac (since I don't have o
   - For this task: You need to create a temp file that user can add global aliases, and avoid it to be got from git (as a modified file or w/e)
 - [ ] Improve automatic project installation with `git clone`.
 - [ ] Create a debugger for errors, enabling or disabling code errors.
-- [ ] Add details on how to install Saint on Mac whenever the terminal starts, avoiding manual use of `source` in the terminal.
+
 - [ ] Create a way to use arrows to select something. This can be done as a helper under `features/helpers/saint_select_option`
 
 #### Done so far:
+- [x] Add details on how to install Saint on Mac whenever the terminal starts, avoiding manual use of `source` in the terminal.
 - [x] Create a Saint Backup command
 - [x] Create a new templating method approach
 - [x] Fix bugs related to no-project states
