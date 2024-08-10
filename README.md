@@ -71,11 +71,12 @@ To install Saint on a Mac, follow these steps:
 - Wait for code review and tests.
 
 ## Saint Commands:
-- `saint edit` - Opens the Saint installation folder for editing in Visual Studio Code.
 - `saint add` - Starts the setup for creating a new project.
+- `saint backup` - Creates a backup from a selected project.
 - `saint delete` - Starts the setup for removing an existing project.
-- `saint list` - Lists existing projects.
+- `saint edit` - Opens the Saint installation folder for editing in Visual Studio Code.
 - `saint help` - Lists all available commands for all active projects.
+- `saint list` - Lists existing projects.
 
 ## Default Commands for New Projects:
 - `exampleProj code` - Opens a project in Visual Studio Code. (`exampleProj_code()`)
