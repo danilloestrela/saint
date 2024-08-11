@@ -95,7 +95,8 @@ To install Saint on a Mac, follow these steps:
 - [ ] [#4 Create a debugger for errors, enabling or disabling code errors.](https://github.com/danilloestrela/saint/issues/4) 
 - [ ] [#6 Method that allows arrows to select some option instead of using a list and input to select](https://github.com/danilloestrela/saint/issues/6) 
 - [ ] [#7 Check updates for saint automatically](https://github.com/danilloestrela/saint/issues/7)
-- [ ] [#8 Restore a project previously created backup](https://github.com/danilloestrela/saint/issues/8) 
+- [ ] [#8 Restore a project previously created backup](https://github.com/danilloestrela/saint/issues/8)
+- [ ] [#10 Create a way to make each project to become a repository in git](https://github.com/danilloestrela/saint/issues/10)
 
 #### Done so far:
 - [x] [#5 Add details on how to install Saint on Mac whenever the terminal starts](https://github.com/danilloestrela/saint/issues/5)
