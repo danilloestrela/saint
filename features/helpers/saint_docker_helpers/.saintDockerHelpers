@@ -6,7 +6,7 @@ saint_check_docker() {
     saint_msg "${RED}ERROR${NC} :: Docker is ${RED}not running${NC}. Please ${YELLOW}start Docker${NC} and try again."
     return 1
   else
-    echo "Docker is running."
+    saint_msg "Docker is running."
   fi
 }
 
