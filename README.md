@@ -88,12 +88,23 @@ To install Saint on a Mac, follow these steps:
     - `exampleProj_code()`
     - `exampleProj_run()`
 
+### Help Comments
+Help comments provide quick documentation for commands within the Saint project. They follow a specific format that allows users to understand the functionality of each command at a glance.
+Warning: it only works under projects folder after added on your `.project` file.
+
+The format for a help comment is as follows:
+```
+#@help <group>!<group>!<command>: <description>
+Example:
+#@help git!pull!all: Pulls all related projects.
+```
+
 ## CORE TODOs:
 - [ ] [#1 Explain the architecture and the "whys" of each folder.](https://github.com/danilloestrela/saint/issues/1)
 - [ ] [#2 Make setup easier: setup to automate Saint installation on any Linux/Mac/WSL.](https://github.com/danilloestrela/saint/issues/2)
 - [ ] [#3 Add common aliases for any project by creating a temp aliases file](https://github.com/danilloestrela/saint/issues/3)
-- [ ] [#4 Create a debugger for errors, enabling or disabling code errors.](https://github.com/danilloestrela/saint/issues/4) 
-- [ ] [#6 Method that allows arrows to select some option instead of using a list and input to select](https://github.com/danilloestrela/saint/issues/6) 
+- [ ] [#4 Create a debugger for errors, enabling or disabling code errors.](https://github.com/danilloestrela/saint/issues/4)
+- [ ] [#6 Method that allows arrows to select some option instead of using a list and input to select](https://github.com/danilloestrela/saint/issues/6)
 - [ ] [#7 Check updates for saint automatically](https://github.com/danilloestrela/saint/issues/7)
 - [ ] [#8 Restore a project previously created backup](https://github.com/danilloestrela/saint/issues/8)
 - [ ] [#9 Create default "Success" | "Error" | "Warning" ’saint_msg’](https://github.com/danilloestrela/saint/issues/9#issue-2459230933)
