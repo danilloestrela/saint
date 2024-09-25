@@ -13,11 +13,11 @@ alias dcl="docker compose logs"
 alias dclf="dcl -f"
 alias dcr="docker compose run --rm"
 # stop all containers available
-alias dsa="docker stop $(docker ps -a -q)"
+alias dsa="docker stop \$(docker ps -a -q)"
 # remove all stopped containers
-alias drma="docker rm $(docker ps -a -q)"
+alias drma="docker rm \$(docker ps -a -q)"
 # remove all images (not running) from docker
-alias drmia="docker rmi $(docker images -a -q)"
+alias drmia="docker rmi \$(docker images -a -q)"
 # Prune all volumes from docker
 alias drmv="docker system prune -a --volumes"
 # Full clean docker to start over
