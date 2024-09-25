@@ -14,9 +14,11 @@ saint_cd_open_code () {
     directoryPath=$1
     if ls $directoryPath; then
         editors=("code" "cursor" "pstorm")
+        saint_msg "Please select a IDE editor to open the code:"
+        saint_msg "${YELLOW}Warning:${NC} If your IDE is not listed, please consider adding it to saint"
         selected_editor=$(saint_select_option "${editors[@]}")
         saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' using $selected_editor for you 🤫."
         cd $directoryPath && $selected_editor . &&
-        cd - || cd - 
+        cd - || cd -
     fi
 };
