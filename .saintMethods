@@ -45,7 +45,17 @@ saint_add_command() {
   local project_name=$1
   local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\${projectCommand} \$1\" \${@:2};;"
   if ! grep -q "${command}" ${SAINT_METHODS_MAIN_COMMANDS_FILE}; then
-    sed -i "/#BEGIN-MAIN-COMMANDS/a ${command}" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i '' "/#BEGIN-MAIN-COMMANDS/a\\
+${command}
+" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+    else
+      sed -i "/#BEGIN-MAIN-COMMANDS/a ${command}" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+    fi
+    if [ $? -ne 0 ]; then
+      saint_msg "${RED}ERROR${NC} :: Failed to add command for project ${project_name}."
+      return 1
+    fi
   fi
 
 }
@@ -53,7 +63,11 @@ saint_add_command() {
 saint_remove_command() {
   local project_name=$1
   local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\${projectCommand} \$1\" \${@:2};;"
-  sed -i "\|${command}|d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "\|${command}|d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+  else
+    sed -i "\|${command}|d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+  fi
 }
 
 saint_validate_project_files() {

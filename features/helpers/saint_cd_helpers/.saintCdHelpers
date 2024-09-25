@@ -13,17 +13,10 @@ saint_cd () {
 saint_cd_open_code () {
     directoryPath=$1
     if ls $directoryPath; then
-        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' into Visual Code for you 🤫."
-        cd $directoryPath && code . &&
+        editors=("code" "cursor" "pstorm")
+        selected_editor=$(saint_select_option "${editors[@]}")
+        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' using $selected_editor for you 🤫."
+        cd $directoryPath && $selected_editor . &&
         cd - || cd - 
     fi
 };
-
-saint_cd_open_pstorm_windows() {
-  directoryPath=$1
-    if ls $directoryPath; then
-        saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' into PhpStorm for you 🤫."
-        cd $directoryPath && pstorm . &&
-        cd - || cd - 
-    fi
-}
