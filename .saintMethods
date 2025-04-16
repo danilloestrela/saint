@@ -22,9 +22,16 @@ saint_project_list() {
 
   # ${newProjName} over existing projects and list them
   for project in "${projects[@]}"; do
-    projName=$(basename "$project")
-    if [ -f "${project}/.${projName}" ]; then
-      echo "${projName}"
+    if [ -d "$project" ]; then
+      local projName=$(basename "$project")
+      local aliasFile="${project}/.alias"
+
+      if [ -f "$aliasFile" ]; then
+        local aliasLine=$(sed -n '3p' "$aliasFile")
+        # Extract the alias shortcut (everything between alias and =)
+        local aliasShortcut=$(echo "$aliasLine" | sed 's/alias \([^=]*\)=.*/\1/')
+        echo "${projName} (${aliasShortcut})"
+      fi
     fi
   done
 }
@@ -120,7 +127,7 @@ saint_initialize_main_commands() {
   if [ ! -d "${SAINT_TEMP_FOLDER}" ]; then
     mkdir "${SAINT_TEMP_FOLDER}"
   fi;
-  
+
   if [ ! -f ${SAINT_METHODS_MAIN_COMMANDS_FILE} ] || [ ! -d $SAINT_TEMP_FOLDER ]; then
     local templatePath="${PROJECT_PATH}/templates/saint_temps/.saintMainCommands.txt"
     local fileNameWithPath="${SAINT_METHODS_MAIN_COMMANDS_FILE}"
