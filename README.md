@@ -90,13 +90,28 @@ To install Saint on a Mac, follow these steps:
 
 ### Help Comments
 Help comments provide quick documentation for commands within the Saint project. They follow a specific format that allows users to understand the functionality of each command at a glance.
-Warning: it only works under projects folder after added on your `.project` file.
 
-The format for a help comment is as follows:
+**Note**: Help comments work in project-specific files (like `.project`) and are displayed when you run the project's help command.
+
+The format for a help comment is:
 ```
-#@help <group>!<group>!<command>: <description>
-Example:
-#@help git!pull!all: Pulls all related projects.
+#@help <group>!<subgroup>!<command>: <description>
+```
+
+**Examples:**
+```bash
+#@help git!pull: Pulls from remote repository
+#@help git!pull!all: Pulls all related projects
+#@help docker!build: Builds Docker image
+```
+
+This help will be displayed in a hierarchical format:
+```
+git
+  pull
+    all   Pulls all related projects
+docker
+  build  Builds Docker image
 ```
 
 ## CORE TODOs:
@@ -107,7 +122,7 @@ Example:
 - [ ] [#6 Method that allows arrows to select some option instead of using a list and input to select](https://github.com/danilloestrela/saint/issues/6)
 - [ ] [#7 Check updates for saint automatically](https://github.com/danilloestrela/saint/issues/7)
 - [ ] [#8 Restore a project previously created backup](https://github.com/danilloestrela/saint/issues/8)
-- [ ] [#9 Create default "Success" | "Error" | "Warning" ’saint_msg’](https://github.com/danilloestrela/saint/issues/9#issue-2459230933)
+- [x] [#9 Create default "Success" | "Error" | "Warning" ’saint_msg’](https://github.com/danilloestrela/saint/issues/9#issue-2459230933)
 - [ ] [#10 Create a way to make each project to become a repository in git](https://github.com/danilloestrela/saint/issues/10)
 
 #### Done so far:
