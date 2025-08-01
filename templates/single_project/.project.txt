@@ -61,7 +61,7 @@ ${newProjName}_code() {
     case $newProjName in
         # Add cases here
         # Ex: site) saint_cd_open_code ${${newProjName}SitePath} || cd - ;;
-        root) saint_cd_open_code ${${newProjName}SitePath} || cd - ;;
+        root) saint_cd_open_code ${${newProjName}Path} || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
     esac
@@ -75,7 +75,7 @@ ${newProjName}_goto() {
     case $newProjName in
         # Add cases here
         # Ex: site) saint_cd ${${newProjName}SitePath} || cd - ;;
-        root) saint_cd ${${newProjName}SitePath} || cd - ;;
+        root) saint_cd ${${newProjName}Path} || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
     esac
