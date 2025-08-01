@@ -8,15 +8,31 @@ saint_msg() {
     echo -e "🤖 ${msg}"
 }
 
+saint_msg_status() {
+  local msg_status=$1
+  local message=$2
+  if [ "$msg_status" = "success" ]; then
+    saint_msg "${GREEN}SUCCESS${NC} ${YELLOW}::${NC} ${message}"
+  elif [ "$msg_status" = "error" ]; then
+    saint_msg "${RED}ERROR${NC} ${YELLOW}::${NC} ${message}"
+  elif [ "$msg_status" = "info" ]; then
+    saint_msg "${BLUE}INFO${NC} ${YELLOW}::${NC} ${message}"
+  elif [ "$msg_status" = "warning" ]; then
+    saint_msg "${YELLOW}WARNING${NC} ${YELLOW}::${NC} ${message}"
+  elif [ "$msg_status" = "debug" ]; then
+    saint_msg "${MAGENTA}DEBUG${NC} ${YELLOW}::${NC} ${message}"
+  fi
+}
+
 saint_empty() {
     emptyCommand=$1
-    saint_msg "${RED}$emptyCommand${NC} :: Command is empty. Try '${projectCommand} ${GREEN}help${NC}'"
+    saint_msg_status "error" "${RED}$emptyCommand${NC} command is empty. Try '${projectCommand} ${GREEN}help${NC}'"
 };
 
 saint_invalid_command () {
     parentCommand=$1
     invalidCommand=$2
-    saint_msg "'${RED}$invalidCommand${NC}' :: Not a valid command in '$parentCommand'."
+    saint_msg_status "error" "'${RED}$invalidCommand${NC}' is not a valid command in '$parentCommand'."
 };
 
 # Function to check if an alias exists
@@ -36,10 +52,10 @@ saint_run_command() {
   local command="$1"
   shift
   local args="$@"
-  
+
   eval "$command $args"
   if [ $? -ne 0 ]; then
-    saint_msg "${RED}Command failed${NC} :: $command $args"
+    saint_msg_status "error" "${RED}Command failed${NC} :: $command $args"
     cd "$orig_dir"
     return 1
   fi
@@ -63,6 +79,35 @@ saint_read() {
 
   eval "$var_name='$input'"
 }
+
+saint_read_path() {
+  local var_name="$1"
+  local prompt="$2"
+  local default="$3"
+  local input
+
+  if [[ -n "$ZSH_VERSION" ]]; then
+    autoload -Uz compinit && compinit
+
+    # Fill with default value
+    eval "$var_name=\$default"
+
+    # Don't use `-c`, that causes duplication
+    vared -p "$prompt" "$var_name"
+
+    return
+  fi
+
+  if [[ -n "$BASH_VERSION" ]]; then
+    read -e -i "$default" -p "$prompt" input
+  else
+    read -p "$prompt" input
+  fi
+
+  [[ -z "$input" ]] && input="$default"
+  eval "$var_name=\$input"
+}
+
 
 source "${PROJECT_PATH}/features/helpers/saint_cd_helpers/.saintCdHelpers"
 source "${PROJECT_PATH}/features/helpers/saint_docker_helpers/.saintDockerHelpers"
