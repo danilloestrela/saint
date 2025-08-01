@@ -6,10 +6,10 @@ saint_add_new_project() {
   if [ ! -n "$newProjName" ]; then
     saint_read "newProjName" "Enter new project name: "
   fi
-  
-  saint_read "newProjectPath" "Enter the path for ${YELLOW_BOLD}${newProjName}${NC} (default: ~/${newProjName}): "  
+  saint_msg_status "info" "Remember that folder has no '/' at the end of the path."
+  saint_read_path "newProjectPath" "Enter the path for ${YELLOW_BOLD}${newProjName}${NC} (default: ~/${newProjName}): "
   # Checking with the user if he wants to create a custom alias for CLI
-  while true; do 
+  while true; do
     saint_read "aliasNameChoice" "Please, type the name of the alias you want to set up for ${YELLOW_BOLD}${newProjName}${NC} (default: ${newProjName}Cmd): "
     if saint_has_alias "${aliasNameChoice}"; then
       saint_msg "Alias name ${YELLOW}'${aliasNameChoice}'${NC} ${RED}already exists${NC}. Please try again. (ctrl or command + c to cancel)"
@@ -20,19 +20,19 @@ saint_add_new_project() {
 
   # Check if newProjName is empty
   if [ -z "$newProjName" ]; then
-    saint_msg "${RED}No project name entered. Exiting.${NC}"
+    saint_msg_status "error" "No project name entered. Exiting."
     return 1
   fi
-  
+
 
   local pDir="${SAINT_PROJECTS_FOLDER}/${newProjName}"
 
-  if [ "${pDir}" = "${SAINT_PROJECTS_FOLDER}/" ]; then 
-    saint_msg "${RED}ERROR${NC} :: Can't create a project with \"${newProjName}\" name."
+  if [ "${pDir}" = "${SAINT_PROJECTS_FOLDER}/" ]; then
+    saint_msg_status "error" "Can't create a project with \"${newProjName}\" name."
   fi;
 
-  if [ -d ${pDir} ]; then 
-    saint_msg "${RED}This project already exists.${NC}"
+  if [ -d ${pDir} ]; then
+    saint_msg_status "error" "This project already exists."
     return 1
   fi;
 
@@ -45,26 +45,26 @@ saint_add_new_project() {
   saint_create_project_variables_template ${newProjName} ${newProjectPath} && \
   saint_create_project_alias_template ${newProjName} ${aliasNameChoice} && \
   saint_create_project_mainCommands_template ${newProjName} || \
-  saint_msg "${RED}ERROR${NC} :: Something went wrong while creating the project template or help"
+  saint_msg_status "error" "Something went wrong while creating the project template or help"
   # Add more fieles as needed, following the pattern above
   ls $pDir -la
-   
+
   if ! saint_validate_project_files "$pDir" "$newProjName"; then
-    saint_msg "${RED}ERROR${NC} :: There must be a file that was not created properly."
+    saint_msg_status "error" "There must be a file that was not created properly."
     rm -rf "$pDir"
     return 1
   fi
 
-  
-  saint_msg "${GREEN}Project \"${newProjName}\" created successfully with standard file structure.${NC}"
+
+  saint_msg_status "success" "${GREEN}Project ${NC}\"${newProjName}\"${GREEN} created successfully with standard file structure.${NC}"
   echo -e ""
   printf "======================================== %-*s ========================================" 0 "FINISHED TEMPLATES"
   echo -e ""
   saint_add_command "$newProjName"
   echo "${newProjName}_help" >> $SAINT_METHODS_MAIN_HELP_FILE
-  
-  saint_msg "${GREEN}Project "${newProjName}" added to main commands and help successfully.${NC} Reloading saint..."
-  source ${PROJECT_PATH}/.saint  
+
+  saint_msg_status "success" "${GREEN}Project ${NC}\"${newProjName}\"${GREEN} added to main commands and help successfully.${NC} ${YELLOW}Reloading saint...${NC}"
+  source ${PROJECT_PATH}/.saint
   echo -e ""
   printf "======================================== %-*s ========================================\n" 0 "UPDATING HELP ON ${newProjName}"
   echo -e ""
@@ -76,8 +76,8 @@ saint_add_new_project() {
 
 saint_delete_project() {
   saint_msg "Hey, select one of the options to ${RED}delete${NC} a project."
-  
-  # Projects from folders
+
+  # Projects from folders (Lists all avaliable projects)
   local all_projects_avaliable=()
   for project in "$SAINT_PROJECTS_FOLDER"/*; do
     if [ -d "$project" ]; then
@@ -85,42 +85,55 @@ saint_delete_project() {
       all_projects_avaliable+=("$projName")
     fi
   done
-  
-  # Select a project to be deleted
+
+  # Asks the user a project to be deleted
   deleteProjectName=$(saint_select_option "${all_projects_avaliable[@]}")
 
-  # checks selection
+  # checks selection, if wrong number is selected, it will return
   if [ -z "$deleteProjectName" ]; then
-    saint_msg "No project selected."
+    saint_msg_status "error" "No project selected."
     return
   fi
 
   local pDir="${SAINT_PROJECTS_FOLDER}/${deleteProjectName}"
-  
+
   if [ ! -d "${pDir}" ] || \
      [[ "${pDir}" == "${SAINT_PROJECTS_FOLDER}/" || \
         "${pDir}" == "${SAINT_PROJECTS_FOLDER}"
       ]]; then
-    saint_msg "Can't delete this folder (${pDir})."
+    saint_msg_status "error" "Can't delete this folder (${YELLOW}${pDir}${NC})."
     return
   fi
-  
+
+  # Attempt to remove custom alias
+  local alias_file="${pDir}/.alias"
+  if [[ -f "$alias_file" ]]; then
+    local custom_alias
+    custom_alias=$(grep '^alias ' "$alias_file" | awk '{print $2}' | cut -d'=' -f1)
+
+    if [[ -n "$custom_alias" ]]; then
+      unalias "$custom_alias" 2>/dev/null || true
+
+      saint_msg_status "success" "Alias ${RED}'${custom_alias}' ${RED}removed${NC} from session."
+    fi
+  fi
 
   # Checks if directory exists
   if [ -d "$pDir" ]; then
     # Removes folder and all files
     rm -r "$pDir"
-    saint_msg "${GREEN}${deleteProjectName} project ${RED}deleted${GREEN} successfully.${NC}"
+    saint_msg_status "success" "${GREEN}Project ${NC}\"${deleteProjectName}\"${GREEN} deleted successfully.${NC}"
 
     # Removes command from Saint Main Commands
     saint_remove_command "$deleteProjectName"
 
     # Rebuilds help (put all existing projects help commands back in)
     saint_rebuild_help
-    saint_msg "${deleteProjectName} project removed from main commands and help. Reloading saint..."
+    saint_msg_status "success" "${GREEN}Project ${NC}\"${deleteProjectName}\"${GREEN} removed from main commands and help."
+    saint_msg_status "info" "${YELLOW}Reloading saint...${NC}"
     source "${PROJECT_PATH}/.saint"
   else
-    saint_msg "${deleteProjectName} does not exist."
+    saint_msg_status "error" "${RED}Project ${NC}\"${deleteProjectName}\"${RED} does not exist.${NC}"
   fi
 }
 
