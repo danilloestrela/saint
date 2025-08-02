@@ -6,7 +6,7 @@ saint_cd () {
         saint_msg "You're now on ${GREEN}$directoryPath${NC} 😁"
         cd $directoryPath || return
     else
-        saint_msg "${RED}$directoryPath${NC} :: This path does not exist or there was an error."
+        saint_msg_status "error" "${RED}$directoryPath${NC} :: This path does not exist or there was an error."
     fi
 };
 
@@ -18,7 +18,8 @@ saint_cd_open_code () {
         saint_msg "${YELLOW}Warning:${NC} If your IDE is not listed, please consider adding it to saint"
         selected_editor=$(saint_select_option "${editors[@]}")
         saint_msg "I'm opening the project within '${YELLOW}$directoryPath${NC}' using $selected_editor for you 🤫."
-        cd $directoryPath && $selected_editor . &&
-        cd - || cd -
+        $selected_editor $directoryPath
+    else
+        saint_msg_status "error" "${RED}$directoryPath${NC} :: This path does not exist or there was an error."
     fi
 };
