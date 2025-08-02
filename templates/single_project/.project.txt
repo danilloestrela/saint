@@ -32,7 +32,7 @@ ${newProjName}_install() {
     lastCommand=$1
     case $2 in
         # Add cases here
-        # Ex: site) ${newProjName}_goto ${lastCommand} ${${newProjName}SitePath} && npm i || cd - ;;
+        # Ex: site) ${newProjName}_goto ${lastCommand} ${${newProjName}Variable} && npm i || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
     esac
@@ -46,7 +46,7 @@ ${newProjName}_run() {
     lastCommand=$1
     case $2 in
         # Add cases here
-        # Ex: site) ${newProjName}_goto ${lastCommand} ${${newProjName}SitePath} && npm run dev || cd - ;;
+        # Ex: site) ${newProjName}_goto ${lastCommand} ${${newProjName}Variable} && npm run dev || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
     esac
@@ -60,7 +60,7 @@ ${newProjName}_code() {
     newProjName=$2
     case $newProjName in
         # Add cases here
-        # Ex: site) saint_cd_open_code ${${newProjName}SitePath} || cd - ;;
+        # Ex: site) saint_cd_open_code ${${newProjName}Variable} || cd - ;;
         root) saint_cd_open_code ${${newProjName}Path} || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
@@ -74,7 +74,7 @@ ${newProjName}_goto() {
     newProjName=$2
     case $newProjName in
         # Add cases here
-        # Ex: site) saint_cd ${${newProjName}SitePath} || cd - ;;
+        # Ex: site) saint_cd ${${newProjName}Variable} || cd - ;;
         root) saint_cd ${${newProjName}Path} || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;

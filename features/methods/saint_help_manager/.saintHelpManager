@@ -27,11 +27,11 @@ saint_help() {
 # END saint_help
 
 saint_rebuild_help() {
-  saint_msg "${YELLOW}Rebuilding${NC} saint help method..."
+  saint_msg_status "info" "${YELLOW}Rebuilding${NC} saint help method..."
 
   # Path to the .saintHelpCommands file
   local helpFile="${SAINT_METHODS_MAIN_HELP_FILE}"
-  
+
   # Clear the existing .saintHelpCommands file
   : > "$helpFile"
   # Add help commands for existing projects
@@ -44,7 +44,7 @@ saint_rebuild_help() {
               if [ -d "$project" ]; then
                   projName=$(basename "$project")
                   # Checks if .ProjectName is there, so probably we can add the method
-                  # TODO: Read the file, check if it exists, because if not, it'll fail 
+                  # TODO: Read the file, check if it exists, because if not, it'll fail
                   if [ -f "${project}/.${projName}" ]; then
                       echo "${projName}_help" >> "$helpFile"
                   fi
@@ -55,7 +55,7 @@ saint_rebuild_help() {
       fi
   fi
 
-  saint_msg "${YELLOW}saint_help${NC} commands updated successfully in ${helpFile}."
+  saint_msg_status "success" "${YELLOW}saint_help${NC} commands updated successfully in ${helpFile}."
 }
 
 saint_print_help() {

@@ -6,6 +6,7 @@ saint_project_help() {
     local max_default_command_length=15
     local max_command_length=0
     local padding=2
+    local titlePadding=35
     local current_main_group=""
     local current_sub_group=""
 
@@ -20,15 +21,17 @@ saint_project_help() {
             done < "$help_file"
         else
             # Set a fixed value if the file is empty
-            max_command_length=10 
+            max_command_length=10
         fi
     fi
 
+    local custom_alias=$(saint_get_project_custom_alias "$project_name")
+
     # Print the help header
-    printf "${GREEN}%-*s${NC}%*s%s\n" $max_default_command_length "$project_name" $padding "Available commands for $project_name." "$description"
+    printf "${GREEN}%-*s${NC}%*s%s\n" $max_default_command_length "${project_name} (${custom_alias})" $titlePadding "Available commands for $project_name." "$description"
     printf "   |- ${YELLOW}%-*s${NC}%*s%s\n" $max_default_command_length "help" $padding "Shows help commands for $project_name" "$description"
     printf "   |- ${YELLOW}%-*s${NC}%*s%s\n" $max_default_command_length "update-help" $padding "Manually updates help commands (from comments)" "$description"
-    
+
     # Print the commands and descriptions aligned and grouped
     if [ -f "$help_file" ]; then
         local subgroup_spaces=""
@@ -49,11 +52,11 @@ saint_project_help() {
             printf "     ${subgroup_spaces}|- ${YELLOW}%-*s${NC}%*s%s\n" $max_command_length "$command" $padding "" "$description"
         done < "$help_file"
     else
-        saint_msg "No help file yet. You can start by running the command update-help"
-        saint_msg "To make a new help command on your project folder you can:"
-        echo -e "Add a comment like the following: ${YELLOW}'#@help mainGroup!subGroup!nameOfCommand: Description'${NC}"
-        echo -e "If you don't add ${YELLOW}'mainGroup!subGroup!'${NC} then it'll add to a group called ${YELLOW}'General'${NC}"
-        echo -e "${RED}WARNING: This will only be added through some functions. Check your project folder for more.${NC}"
+        saint_msg_status "info" "No help file yet. You can start by running the command update-help"
+        saint_msg_status "info" "To make a new help command on your project folder you can:"
+        saint_msg_status "info" "Add a comment like the following: ${YELLOW}'#@help mainGroup!subGroup!nameOfCommand: Description'${NC}"
+        saint_msg_status "info" "If you don't add ${YELLOW}'mainGroup!subGroup!'${NC} then it'll add to a group called ${YELLOW}'General'${NC}"
+        saint_msg_status "warning" "This will only be added through some functions. Check your project folder for more."
     fi
 }
 
@@ -138,7 +141,7 @@ saint_project_update_help() {
 
             command=${rest%%:*}
             description=${rest#*: }
-            
+
             saint_msg "Processing help comment: main_group='$main_group', sub_group='$sub_group', command='$command', description='$description'"
             saint_project_add_help "$help_file" "$main_group" "$sub_group" "$command" "$description"
         fi

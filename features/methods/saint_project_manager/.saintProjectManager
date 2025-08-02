@@ -137,6 +137,16 @@ saint_delete_project() {
   fi
 }
 
+saint_get_project_custom_alias() {
+  local project_name="$1"
+  local alias_file="${SAINT_PROJECTS_FOLDER}/${project_name}/.alias"
+  if [[ -f "$alias_file" ]]; then
+    local custom_alias
+    custom_alias=$(grep '^alias ' "$alias_file" | awk '{print $2}' | cut -d'=' -f1)
+  fi
+  echo "$custom_alias"
+}
+
 source "${PROJECT_PATH}/features/methods/saint_project_manager/.saintProjectManagerBackup"
 source "${PROJECT_PATH}/features/methods/saint_project_manager/.saintProjectManagerHelp"
 

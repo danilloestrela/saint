@@ -11,6 +11,6 @@
         update-help) saint_rebuild_help ;;
         #BEGIN-MAIN-COMMANDS
         #END-MAIN-COMMANDS
-        "") saint_msg "Saint is ${GREEN_BOLD}running${NC}  🤖";;
+        "") saint_msg_status "success" "Saint is ${GREEN_BOLD}running${NC}  🤖";;
         *) saint_invalid_command ${projectCommand} $1 ;;
     esac

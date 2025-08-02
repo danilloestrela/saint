@@ -60,7 +60,7 @@ ${command}
       sed -i "/#BEGIN-MAIN-COMMANDS/a ${command}" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
     fi
     if [ $? -ne 0 ]; then
-      saint_msg "${RED}ERROR${NC} :: Failed to add command for project ${project_name}."
+      saint_msg_status "error" "Failed to add command for project ${YELLOW}${project_name}${NC}."
       return 1
     fi
   fi
@@ -83,7 +83,7 @@ saint_validate_project_files() {
   local mandatory_files=(".alias" ".${project_name}" ".mainCommands" ".variables")
   for file in "${mandatory_files[@]}"; do
     if [ ! -f "${project_dir}/${file}" ]; then
-      saint_msg "${RED}ERROR${NC} :: Missing mandatory file ${file} in project ${project_name}."
+      saint_msg_status "error" "Missing mandatory file ${YELLOW}${file}${NC} in project ${YELLOW}${project_name}${NC}."
       return 1
     fi
   done
@@ -109,7 +109,7 @@ saint_load_project_commands() {
       fi
     done
   else
-    saint_msg "No projects found in ${SAINT_PROJECTS_FOLDER}."
+    saint_msg_status "info" "No projects found in ${YELLOW}${SAINT_PROJECTS_FOLDER}${NC}."
     return 1
   fi
 
@@ -120,7 +120,7 @@ saint_update_project_commands() {
   sed -i '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' ${SAINT_METHODS_MAIN_COMMANDS_FILE}
 
   saint_load_project_commands
-  saint_msg "${GREEN}Project commands updated successfully.${NC}"
+  saint_msg_status "success" "Project commands updated successfully."
 }
 
 saint_initialize_main_commands() {

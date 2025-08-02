@@ -1,6 +1,6 @@
 #!/bin/bash
 # saint Commands
-# TODO: Let the user choose what he wants, automatically install everything(git clone projects), or manually (choose the path before clonning each) 
+# TODO: Let the user choose what he wants, automatically install everything(git clone projects), or manually (choose the path before clonning each)
 # It is absolutely forbidden to change "BRAINILLO_FIRST_EXECUTION" variable name.
 BRAINILLO_FIRST_EXECUTION=true
 
@@ -23,7 +23,7 @@ saint () {
 
   # Adds saint custom Alias
   source ${PROJECT_PATH}/.saintCustomAlias
-  
+
   # Other projects variables required
   source ${PROJECT_PATH}/.saintVariables
 
@@ -32,21 +32,21 @@ saint () {
 
   # Loading Projects
   source ${PROJECT_PATH}/.saintProjects
-  
+
   # Required: Methods
   source ${PROJECT_PATH}/.saintMethods
 
-  if test "${BRAINILLO_FIRST_EXECUTION}" = "false"; then 
+  if test "${BRAINILLO_FIRST_EXECUTION}" = "false"; then
     # Initialize the .saintMainCommands if it doesn't exist
     if [ ! -f ${SAINT_METHODS_MAIN_COMMANDS_FILE} ]; then
-      
+
       saint_initialize_main_commands || \
-      saint_msg "${YELLOW}FATAL ERROR${NC} :: while initializing Saint." || return 1
+      saint_msg_status "error" "${YELLOW}FATAL${NC} :: while initializing Saint." || return 1
 
       if [ -f ${SAINT_METHODS_MAIN_COMMANDS_FILE} ]; then
-        source ${SAINT_METHODS_MAIN_COMMANDS_FILE} 
+        source ${SAINT_METHODS_MAIN_COMMANDS_FILE}
       else
-        saint_msg "${YELLOW}WARNING${NC} :: There is no main commands file to load yet."      
+        saint_msg_status "warning" "There is no main commands file to load yet."
       fi;
 
     else
@@ -60,21 +60,21 @@ saint () {
     # we need to check when openning saint if everything is set and ready.
     if [ ! -f ${SAINT_METHODS_MAIN_COMMANDS_FILE} ]; then
       saint_initialize_main_commands || \
-      saint_msg "${YELLOW}FATAL ERROR${NC} :: while initializing Saint."
+      saint_msg_status "error" "${YELLOW}FATAL${NC} :: while initializing Saint."
       if [ -f ${SAINT_METHODS_MAIN_COMMANDS_FILE} ]; then
         source "${SAINT_METHODS_MAIN_COMMANDS_FILE}"
       else
-        saint_msg "${YELLOW}WARNING${NC} :: There is no main commands file to load yet."      
+        saint_msg_status "warning" "There is no main commands file to load yet."
       fi;
-      
-      echo -e "Made the first setup and ${projectName} is ${GREEN}running${NC} 🤖"
+
+      saint_msg_status "success" "Made the first setup and ${projectName} is ${GREEN}running${NC} 🤖"
       BRAINILLO_FIRST_EXECUTION=false
     else
-      echo -e "${projectName} is ${GREEN}running${NC} 🤖"
+      saint_msg_status "info" "${projectName} is ${GREEN}running${NC} 🤖"
       BRAINILLO_FIRST_EXECUTION=false
     fi;
   fi
-  
+
 };
 
 saint
