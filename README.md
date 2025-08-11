@@ -126,7 +126,7 @@ docker
 - [ ] [#7 Check for Saint updates automatically](https://github.com/danilloestrela/saint/issues/7)
 - [ ] [#8 Restore a project from a previously created backup](https://github.com/danilloestrela/saint/issues/8)
 - [ ] [#10 Create a way to make each project a Git repository](https://github.com/danilloestrela/saint/issues/10)
-- [ ] [#11 Autocomplete feature for all commands under the project](#)
+- [ ] [#12 Add Autocomplete for Project Commands (Pure Bash/Zsh)](https://github.com/danilloestrela/saint/issues/12)
 </details>
 
 ### [Project DONEs](DONE.md)
