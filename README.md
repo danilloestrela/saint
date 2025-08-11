@@ -20,7 +20,7 @@ It was initially created to facilitate the organization of my projects in WSL2. 
     fi
     ```
 4. If using [Oh my Zsh](https://ohmyz.sh/), add it to the `.zshrc` file.
-5. After that, restart the terminal. If you see the message: `Saint is running`, then it's ready to use.
+5. After that, restart the terminal. If you see the message: `🤖 INFO :: Saint is running 🤖`, then it's ready to use.
 
 #### Mac
 To install Saint on a Mac, follow these steps:
