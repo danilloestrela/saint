@@ -113,7 +113,8 @@ git
 docker
   build  Builds Docker image
 ```
-
+<details>
+<summary><strong>CORE TODOs:</strong></summary>
 ## CORE TODOs:
 - [ ] [#1 Explain the architecture and the "whys" of each folder.](https://github.com/danilloestrela/saint/issues/1)
 - [ ] [#2 Make setup easier: setup to automate Saint installation on any Linux/Mac/WSL.](https://github.com/danilloestrela/saint/issues/2)
@@ -122,15 +123,9 @@ docker
 - [ ] [#6 Method that allows arrows to select some option instead of using a list and input to select](https://github.com/danilloestrela/saint/issues/6)
 - [ ] [#7 Check updates for saint automatically](https://github.com/danilloestrela/saint/issues/7)
 - [ ] [#8 Restore a project previously created backup](https://github.com/danilloestrela/saint/issues/8)
-- [x] [#9 Create default "Success" | "Error" | "Warning" ’saint_msg’](https://github.com/danilloestrela/saint/issues/9#issue-2459230933)
 - [ ] [#10 Create a way to make each project to become a repository in git](https://github.com/danilloestrela/saint/issues/10)
+- [ ] #11 Autocomplete feature for all commands under the project
 
-#### Done so far:
-- [x] [#5 Add details on how to install Saint on Mac whenever the terminal starts](https://github.com/danilloestrela/saint/issues/5)
-- [x] Add supported OS for this project.
-- [x] Create a Saint Backup command
-- [x] Create a new templating method approach
-- [x] Fix bugs related to no-project states
-- [x] Fix template bug that new line is not scapped properly and end up beeing printed after creating a new project on the .project file.
-- [x] Optimize helpers to avoid compromising projects from older versions (preferably).
-- [x] Add a delete setup capable of selecting one of the projects from the list (project folder) and removing it instead of typing its name.
+</details>
+
+- [Project DONEs](DONE.md)
