@@ -114,18 +114,19 @@ docker
   build  Builds Docker image
 ```
 <details>
-<summary><strong>CORE TODOs:</strong></summary>
-## CORE TODOs:
-- [ ] [#1 Explain the architecture and the "whys" of each folder.](https://github.com/danilloestrela/saint/issues/1)
-- [ ] [#2 Make setup easier: setup to automate Saint installation on any Linux/Mac/WSL.](https://github.com/danilloestrela/saint/issues/2)
-- [ ] [#3 Add common aliases for any project by creating a temp aliases file](https://github.com/danilloestrela/saint/issues/3)
-- [ ] [#4 Create a debugger for errors, enabling or disabling code errors.](https://github.com/danilloestrela/saint/issues/4)
-- [ ] [#6 Method that allows arrows to select some option instead of using a list and input to select](https://github.com/danilloestrela/saint/issues/6)
-- [ ] [#7 Check updates for saint automatically](https://github.com/danilloestrela/saint/issues/7)
-- [ ] [#8 Restore a project previously created backup](https://github.com/danilloestrela/saint/issues/8)
-- [ ] [#10 Create a way to make each project to become a repository in git](https://github.com/danilloestrela/saint/issues/10)
-- [ ] #11 Autocomplete feature for all commands under the project
+<summary><strong>CORE TODOs</strong></summary>
 
+## CORE TODOs
+
+- [ ] [#1 Explain the architecture and the "whys" of each folder](https://github.com/danilloestrela/saint/issues/1)
+- [ ] [#2 Make setup easier: automate Saint installation on any Linux/Mac/WSL](https://github.com/danilloestrela/saint/issues/2)
+- [ ] [#3 Add common aliases for any project by creating a temp aliases file](https://github.com/danilloestrela/saint/issues/3)
+- [ ] [#4 Create a debugger for errors, enabling or disabling code errors](https://github.com/danilloestrela/saint/issues/4)
+- [ ] [#6 Method that allows arrow keys to select options instead of typing](https://github.com/danilloestrela/saint/issues/6)
+- [ ] [#7 Check for Saint updates automatically](https://github.com/danilloestrela/saint/issues/7)
+- [ ] [#8 Restore a project from a previously created backup](https://github.com/danilloestrela/saint/issues/8)
+- [ ] [#10 Create a way to make each project a Git repository](https://github.com/danilloestrela/saint/issues/10)
+- [ ] [#11 Autocomplete feature for all commands under the project](#)
 </details>
 
 - [Project DONEs](DONE.md)
