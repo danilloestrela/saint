@@ -12,6 +12,8 @@ saint_help() {
   saint_print_help "edit" "Edit the Saint script"
   saint_print_help "list" "List all projects"
   saint_print_help "help" "Show this help message"
+  saint_print_help "version" "Show Saint version information"
+  saint_print_help "update" "Check for updates and manage Saint updates"
   saint_print_help "update-help" "Rebuilds project help commands (updates to existing, does not overwrite)"
   saint_print_help "update-commands" "Update project commands"
   echo -e ""

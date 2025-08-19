@@ -109,7 +109,9 @@ saint_read_path() {
 }
 
 
-source "${PROJECT_PATH}/features/helpers/saint_cd_helpers/.saintCdHelpers"
-source "${PROJECT_PATH}/features/helpers/saint_docker_helpers/.saintDockerHelpers"
-source "${PROJECT_PATH}/features/helpers/saint_git_helpers/.saintGitHelpers"
-source "${PROJECT_PATH}/features/helpers/saint_select_option/.saintSelectOption"
+source "${PROJECT_PATH}/core/features/helpers/saint_cd_helpers/.saintCdHelpers"
+source "${PROJECT_PATH}/core/features/helpers/saint_docker_helpers/.saintDockerHelpers"
+source "${PROJECT_PATH}/core/features/helpers/saint_git_helpers/.saintGitHelpers"
+source "${PROJECT_PATH}/core/features/helpers/saint_select_option/.saintSelectOption"
+source "${PROJECT_PATH}/core/features/version/.saintAutoUpdate"
+source "${PROJECT_PATH}/core/features/version/.saintVersion"

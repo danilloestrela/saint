@@ -5,16 +5,39 @@ local configFilePath=${PROJECT_PATH}/.saint
 local projectsDir="projects"
 local projectName="Saint"
 local projects=()
+
 if [ -d "${PROJECT_PATH}/$projectsDir" ] && [ "$(find ${PROJECT_PATH}/$projectsDir -mindepth 1 -type d | head -n 1)" ]; then
   projects=("${PROJECT_PATH}/$projectsDir"/*)
 fi
-declare -A help
+
+# Initialize help array (associative if supported, regular if not)
+if [[ "${BASH_VERSION}" ]] && ((BASH_VERSINFO[0] >= 4)); then
+  declare -A help
+else
+  # Fallback for older bash or other bash-compatible shells
+  help=()
+fi
 
 # This is were the temp files for commands will be loaded. Your data will not be mixed with the saint core.
 local SAINT_TEMP_FOLDER=${PROJECT_PATH}/saint_temp
 local SAINT_PROJECTS_FOLDER=${PROJECT_PATH}/${projectsDir}
 local SAINT_METHODS_MAIN_COMMANDS_FILE=${SAINT_TEMP_FOLDER}/.saintMainCommands
 local SAINT_METHODS_MAIN_HELP_FILE=${SAINT_TEMP_FOLDER}/.saintHelpCommands
+
+# Core paths structure
+local SAINT_CORE_PATH=${PROJECT_PATH}/core
+local SAINT_METHODS_PATH=${SAINT_CORE_PATH}/methods
+local SAINT_HELPERS_PATH=${SAINT_CORE_PATH}/helpers
+local SAINT_VARIABLES_PATH=${SAINT_CORE_PATH}/variables
+local SAINT_FEATURES_PATH=${SAINT_CORE_PATH}/features
+
+# Auto-update system variables
+local SAINT_GITHUB_REPO="danilloestrela/saint"
+local SAINT_GITHUB_API="https://api.github.com/repos/${SAINT_GITHUB_REPO}"
+local SAINT_GITHUB_RELEASES="${SAINT_GITHUB_API}/releases/latest"
+local SAINT_GITHUB_ARCHIVE="https://github.com/${SAINT_GITHUB_REPO}/archive/refs/tags"
+local SAINT_UPDATE_CHECK_FILE="${HOME}/.saint_update_check"
+local SAINT_UPDATE_INTERVAL=7
 
 # Color bash variables
 if command -v tput &> /dev/null; then

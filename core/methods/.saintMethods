@@ -141,6 +141,13 @@ saint_initialize_main_commands() {
   fi
 }
 
-source "${PROJECT_PATH}/features/methods/saint_help_manager/.saintHelpManager"
-source "${PROJECT_PATH}/features/methods/saint_template_manager/.saintTemplateManager"
-source "${PROJECT_PATH}/features/methods/saint_project_manager/.saintProjectManager"
+# Update command handler
+saint_handle_update() {
+    saint_update_commands "$@"
+}
+
+
+
+source "${PROJECT_PATH}/core/features/methods/saint_help_manager/.saintHelpManager"
+source "${PROJECT_PATH}/core/features/methods/saint_template_manager/.saintTemplateManager"
+source "${PROJECT_PATH}/core/features/methods/saint_project_manager/.saintProjectManager"

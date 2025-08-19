@@ -1,0 +1,262 @@
+#!/bin/bash
+
+# Saint Auto-Update System
+# Provides automatic version checking and updating
+
+# Auto-update system uses centralized variables from .saintVariables
+# All variables are defined in core/variables/.saintVariables
+
+# Check if update check is needed
+saint_should_check_update() {
+    if [ ! -f "${SAINT_UPDATE_CHECK_FILE}" ]; then
+        return 0  # No check file, should check
+    fi
+    
+    local last_check=$(cat "${SAINT_UPDATE_CHECK_FILE}" 2>/dev/null)
+    local current_time=$(date +%s)
+    local time_diff=$((current_time - last_check))
+    local days_diff=$((time_diff / 86400))  # Convert seconds to days
+    
+    [ $days_diff -ge $SAINT_UPDATE_INTERVAL ]
+}
+
+# Mark update check as completed
+saint_mark_update_check() {
+    date +%s > "${SAINT_UPDATE_CHECK_FILE}"
+}
+
+# Get latest version from GitHub
+saint_get_latest_version() {
+    local latest_version=""
+    
+    # Try to get latest release
+    if command -v curl &> /dev/null; then
+        latest_version=$(curl -s "${SAINT_GITHUB_RELEASES}" | \
+                       grep '"tag_name"' | \
+                       sed 's/.*"tag_name": "v\([^"]*\)".*/\1/' 2>/dev/null)
+    elif command -v wget &> /dev/null; then
+        latest_version=$(wget -qO- "${SAINT_GITHUB_RELEASES}" | \
+                       grep '"tag_name"' | \
+                       sed 's/.*"tag_name": "v\([^"]*\)".*/\1/' 2>/dev/null)
+    fi
+    
+    echo "$latest_version"
+}
+
+# Compare versions
+saint_compare_versions() {
+    local current="$1"
+    local latest="$2"
+    
+    if [ -z "$latest" ]; then
+        return 1  # Can't determine latest version
+    fi
+    
+    # Simple version comparison (assumes semantic versioning)
+    local current_major=$(echo "$current" | cut -d. -f1)
+    local current_minor=$(echo "$current" | cut -d. -f2)
+    local current_patch=$(echo "$current" | cut -d. -f3)
+    
+    local latest_major=$(echo "$latest" | cut -d. -f1)
+    local latest_minor=$(echo "$latest" | cut -d. -f2)
+    local latest_patch=$(echo "$latest" | cut -d. -f3)
+    
+    # Compare major version
+    if [ "$latest_major" -gt "$current_major" ]; then
+        echo "major"
+        return 0
+    elif [ "$latest_major" -lt "$current_major" ]; then
+        return 1
+    fi
+    
+    # Compare minor version
+    if [ "$latest_minor" -gt "$current_minor" ]; then
+        echo "minor"
+        return 0
+    elif [ "$latest_minor" -lt "$current_minor" ]; then
+        return 1
+    fi
+    
+    # Compare patch version
+    if [ "$latest_patch" -gt "$current_patch" ]; then
+        echo "patch"
+        return 0
+    fi
+    
+    return 1  # No update needed
+}
+
+# Show update notification
+saint_show_update_notification() {
+    local current_version="$1"
+    local latest_version="$2"
+    local update_type="$3"
+    
+    echo ""
+    echo "🔄 ${YELLOW}Update Available!${NC}"
+    echo "================================"
+    echo "Current Version: ${GREEN}${current_version}${NC}"
+    echo "Latest Version:  ${GREEN}${latest_version}${NC}"
+    echo "Update Type:     ${GREEN}${update_type^}${NC}"
+    echo ""
+    echo "To update, run: ${GREEN}saint update${NC}"
+    echo "To check later: ${GREEN}saint update check${NC}"
+    echo ""
+}
+
+# Check for updates
+saint_check_for_updates() {
+    local current_version="${SAINT_VERSION}"
+    local latest_version=$(saint_get_latest_version)
+    
+    if [ -z "$latest_version" ]; then
+        saint_msg_status "warning" "Could not check for updates (network issue or API limit)"
+        return 1
+    fi
+    
+    local update_type=$(saint_compare_versions "$current_version" "$latest_version")
+    
+    if [ $? -eq 0 ]; then
+        saint_show_update_notification "$current_version" "$latest_version" "$update_type"
+        return 0
+    fi
+    
+    return 1  # No update needed
+}
+
+# Perform automatic update check
+saint_auto_check_update() {
+    if saint_should_check_update; then
+        saint_check_for_updates
+        saint_mark_update_check
+    fi
+}
+
+# Download and install update
+saint_download_update() {
+    local version="$1"
+    local temp_dir="/tmp/saint_update_$$"
+    local archive_url="${SAINT_GITHUB_ARCHIVE}/v${version}.tar.gz"
+    
+    saint_msg_status "info" "Downloading Saint v${version}..."
+    
+    # Create temporary directory
+    mkdir -p "$temp_dir"
+    cd "$temp_dir"
+    
+    # Download and extract
+    if command -v curl &> /dev/null; then
+        curl -L -o "saint-${version}.tar.gz" "$archive_url"
+    elif command -v wget &> /dev/null; then
+        wget -O "saint-${version}.tar.gz" "$archive_url"
+    else
+        saint_msg_status "error" "Neither curl nor wget is available"
+        return 1
+    fi
+    
+    if [ ! -f "saint-${version}.tar.gz" ]; then
+        saint_msg_status "error" "Failed to download update"
+        return 1
+    fi
+    
+    # Extract archive
+    tar -xzf "saint-${version}.tar.gz" || {
+        saint_msg_status "error" "Failed to extract update"
+        return 1
+    }
+    
+    # Find the extracted directory
+    local extracted_dir=$(ls -d saint-* | head -1)
+    if [ -z "$extracted_dir" ]; then
+        saint_msg_status "error" "Failed to find extracted files"
+        return 1
+    fi
+    
+    saint_msg_status "info" "Installing update..."
+    
+    # Backup current installation
+    local backup_dir="${PROJECT_PATH}_backup_$(date +%Y%m%d_%H%M%S)"
+    cp -r "${PROJECT_PATH}" "$backup_dir"
+    
+    # Copy new files (excluding user-specific directories)
+    cp -r "${extracted_dir}/"* "${PROJECT_PATH}/"
+    
+    # Preserve user projects and configuration
+    if [ -d "${backup_dir}/projects" ]; then
+        cp -r "${backup_dir}/projects" "${PROJECT_PATH}/"
+    fi
+    
+    if [ -d "${backup_dir}/saint_temp" ]; then
+        cp -r "${backup_dir}/saint_temp" "${PROJECT_PATH}/"
+    fi
+    
+    # Clean up
+    cd /
+    rm -rf "$temp_dir"
+    
+    saint_msg_status "success" "Saint updated to v${version} successfully!"
+    saint_msg_status "info" "Backup saved to: ${backup_dir}"
+    echo ""
+    echo "🔄 Please restart your terminal or run: source ~/.saint"
+    echo ""
+}
+
+# Update command handler
+saint_update_commands() {
+    local command="$1"
+    
+    case "$command" in
+        "check"|"")
+            saint_msg_status "info" "Checking for updates..."
+            saint_check_for_updates
+            ;;
+        "auto")
+            local latest_version=$(saint_get_latest_version)
+            if [ -n "$latest_version" ]; then
+                saint_download_update "$latest_version"
+            else
+                saint_msg_status "error" "Could not determine latest version"
+            fi
+            ;;
+        "force")
+            local version="$2"
+            if [ -z "$version" ]; then
+                saint_msg_status "error" "Version number required: saint update force <version>"
+                return 1
+            fi
+            saint_download_update "$version"
+            ;;
+        "status")
+            echo ""
+            echo "🤖 Saint Update Status"
+            echo "======================"
+            echo "Current Version: ${GREEN}${SAINT_VERSION}${NC}"
+            echo "Last Check: ${YELLOW}$(if [ -f "${SAINT_UPDATE_CHECK_FILE}" ]; then 
+                if date -r "${SAINT_UPDATE_CHECK_FILE}" 2>/dev/null; then 
+                    : # Success, date was printed
+                else
+                    echo 'File exists but cannot read date'
+                fi
+            else 
+                echo 'Never'
+            fi)${NC}"
+            echo "Check Interval: ${YELLOW}${SAINT_UPDATE_INTERVAL} days${NC}"
+            echo ""
+            ;;
+        *)
+            echo ""
+            echo "🔄 Saint Update Commands"
+            echo "========================"
+            echo "check   - Check for available updates"
+            echo "auto    - Automatically download and install latest version"
+            echo "force   - Force update to specific version: saint update force <version>"
+            echo "status  - Show update system status"
+            echo ""
+            echo "Examples:"
+            echo "  saint update check    - Check for updates"
+            echo "  saint update auto     - Auto-update to latest version"
+            echo "  saint update force 1.1.0 - Force update to v1.1.0"
+            echo ""
+            ;;
+    esac
+}

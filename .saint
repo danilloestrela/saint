@@ -1,8 +1,11 @@
 #!/bin/bash
 # saint Commands
-# TODO: Let the user choose what he wants, automatically install everything(git clone projects), or manually (choose the path before clonning each)
 # It is absolutely forbidden to change "BRAINILLO_FIRST_EXECUTION" variable name.
+# This variable was created in the first version of Saint, and it has emotional value.
 BRAINILLO_FIRST_EXECUTION=true
+
+# Saint Version - Simple and clean
+SAINT_VERSION="1.0.0"
 
 saint () {
   # Config
@@ -21,20 +24,26 @@ saint () {
   #  projectCommand should be used as a string to show the method command.
   local projectCommand='saint'
 
+  # Simple version command
+  if [ "$1" = "version" ]; then
+    saint_version
+    return 0
+  fi
+
   # Adds saint custom Alias
-  source ${PROJECT_PATH}/.saintCustomAlias
+  source ${PROJECT_PATH}/core/.saintCustomAlias
 
   # Other projects variables required
-  source ${PROJECT_PATH}/.saintVariables
+  source ${PROJECT_PATH}/core/variables/.saintVariables
 
   # Required: Helpers
-  source ${PROJECT_PATH}/.saintHelpers
+  source ${PROJECT_PATH}/core/helpers/.saintHelpers
 
   # Loading Projects
-  source ${PROJECT_PATH}/.saintProjects
+  source ${PROJECT_PATH}/core/.saintProjects
 
   # Required: Methods
-  source ${PROJECT_PATH}/.saintMethods
+  source ${PROJECT_PATH}/core/methods/.saintMethods
 
   if test "${BRAINILLO_FIRST_EXECUTION}" = "false"; then
     # Initialize the .saintMainCommands if it doesn't exist
@@ -55,7 +64,8 @@ saint () {
 
   fi;
 
-  # check first Execution - Because it will first load the function, then it'll load saint to check if it is really loaded.
+  # check first Execution - Because it will first load the function, 
+  # then it'll load saint to check if it is really loaded.
   if test "${BRAINILLO_FIRST_EXECUTION}" = "true"; then
     # we need to check when openning saint if everything is set and ready.
     if [ ! -f ${SAINT_METHODS_MAIN_COMMANDS_FILE} ]; then

@@ -147,6 +147,6 @@ saint_get_project_custom_alias() {
   echo "$custom_alias"
 }
 
-source "${PROJECT_PATH}/features/methods/saint_project_manager/.saintProjectManagerBackup"
-source "${PROJECT_PATH}/features/methods/saint_project_manager/.saintProjectManagerHelp"
+source "${PROJECT_PATH}/core/features/methods/saint_project_manager/.saintProjectManagerBackup"
+source "${PROJECT_PATH}/core/features/methods/saint_project_manager/.saintProjectManagerHelp"
 

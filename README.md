@@ -1,132 +1,205 @@
-## Saint: Project Manager in Bash/Shell
+# 🤖 Saint - Intelligent Project Management System
 
-Saint is a project manager made in bash/shell.
+[![GitHub release](https://img.shields.io/github/v/release/danilloestrela/saint)](https://github.com/danilloestrela/saint/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Bash](https://img.shields.io/badge/bash-Bash%20%7C%20Zsh-green.svg)](https://github.com/danilloestrela/saint)
 
-It was initially created to facilitate the organization of my projects in WSL2. Over time, it gained structure and an architecture to handle the automatic creation and removal of projects, as well as simple and unique aliases for each project. This allows you to manage any project easily from any folder in the terminal, saving time when creating and editing common elements in programming projects.
-### Supported Operation Systems
-![Linux](https://img.shields.io/badge/Linux-000?style=for-the-badge&logo=linux&logoColor=FCC624)
-![Ubuntu](https://img.shields.io/badge/Ubuntu-35495E?style=for-the-badge&logo=ubuntu&logoColor=2CA5E0)
-![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0)
-![WSL2](https://img.shields.io/badge/WSL2-blue)
+> **Saint** is a powerful, intelligent project management CLI built with Bash scripting that automates your development workflow, manages projects, and keeps you organized.
 
-### Installation Guide:
-#### Linux (Ubuntu/WSL)
-1. Clone Saint to your user's root directory. (`~/`).
-2. In the user root, locate the .bashrc file.
-3. Use "nano" or your preferred editor to add the following code at the end of the file:
-    ```
-    if [ -s ~/saint/.saint ]; then
-        . ~/saint/.saint
-    fi
-    ```
-4. If using [Oh my Zsh](https://ohmyz.sh/), add it to the `.zshrc` file.
-5. After that, restart the terminal. If you see the message: `🤖 INFO :: Saint is running 🤖`, then it's ready to use.
+## ✨ Features
 
-#### Mac
-To install Saint on a Mac, follow these steps:
+- **Smart Project Management** - Add, remove, and manage projects with intelligent templates
+- **Auto-Update System** - Automatically checks for updates and notifies you
+- **Command Aliases** - Project-specific shortcuts and commands
+- **Helper Functions** - Docker, Git, and CD helpers built-in
+- **Dynamic Help System** - Auto-generated help from code comments
+- **Beautiful UI** - Color-coded status messages and notifications
+- **Extensible Architecture** - Easy to add new features and helpers
 
-1. Clone Saint to your user's root directory. (`~/`).
+## 🚀 Quick Start
 
-2. Open the Terminal and check if the `.zshrc` file exists in your home directory:
-    ```bash
-    ls -la ~ | grep .zshrc
-    ```
-    If the file does not exist, create it with the following command:
-    ```bash
-    touch ~/.zshrc
-    ```
+### Supported Operating Systems
+- ![Linux](https://img.shields.io/badge/Linux-000?style=for-the-badge&logo=linux&logoColor=FCC624)
+- ![Ubuntu](https://img.shields.io/badge/Ubuntu-35495E?style=for-the-badge&logo=ubuntu&logoColor=2CA5E0)
+- ![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0)
+- ![WSL2](https://img.shields.io/badge/WSL2-blue)
 
-3. Edit the `.zshrc` file with a text editor of your choice:
-    - Using `nano`:
-      ```bash
-      nano ~/.zshrc
-      ```
-    - Using `vim`:
-      ```bash
-      vim ~/.zshrc
-      ```
-    - Using `Visual Studio Code`:
-      ```bash
-      code ~/.zshrc
-      ```
+### Installation
 
-4. Add the following code at the end of the `.zshrc` file to source Saint whenever a terminal session starts:
-    ```bash
-    if [ -s ~/saint/.saint ]; then
-        . ~/saint/.saint
-    fi
-    ```
-
-5. Save the file and restart the terminal. If you see the message `Saint is running`, then Saint is successfully installed and ready to use.
-
-### Some Observations:
-1. Originally, I edited Saint using Visual Studio Code, but you are free to enhance it with the IDE of your choice.
-2. This is my first open source project, mainly because I thought it could add more to the community. This means I am more than open to suggestions and help to make it the best possible for everyone.
-
-### How to contribute?
-- Read a bit about ["how to contribute opensource projects"](https://docs.github.com/en/get-started/exploring-projects-on-github/finding-ways-to-contribute-to-open-source-on-github)
-- Leave your question or suggestion in the "issues" tab.
-- Fork this project and start your changes 😊. You can have a great ["How to" over here](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project).
-- Make a PR and link it to the issues you created or that anyone came up.
-- Wait for code review and tests.
-
-## Saint Commands:
-- `saint add` - Starts the setup for creating a new project.
-- `saint backup` - Creates a backup from a selected project.
-- `saint delete` - Starts the setup for removing an existing project.
-- `saint edit` - Opens the Saint installation folder for editing in Visual Studio Code.
-- `saint help` - Lists all available commands for all active projects.
-- `saint list` - Lists existing projects.
-
-## Default Commands for New Projects:
-- `exampleProj code` - Opens a project in Visual Studio Code. (`exampleProj_code()`)
-- `exampleProj goto` - Goes to the configured project folder. Edit `.variables` and the `goto` function within `exampleProj_goto()`.
-- `exampleProj run` - Executes something within the `exampleProj_run()` function.
-- `exampleProj help` - Displays the available commands for this project.
-- `exampleProj update-help` - Updates the help based on comments in the functions:
-    - `exampleProj_goto()`
-    - `exampleProj_code()`
-    - `exampleProj_run()`
-
-### Help Comments
-Help comments provide quick documentation for commands within the Saint project. They follow a specific format that allows users to understand the functionality of each command at a glance.
-
-**Note**: Help comments work in project-specific files (like `.project`) and are displayed when you run the project's help command.
-
-The format for a help comment is:
-```
-#@help <group>!<subgroup>!<command>: <description>
-```
-
-**Examples:**
 ```bash
-#@help git!pull: Pulls from remote repository
-#@help git!pull!all: Pulls all related projects
-#@help docker!build: Builds Docker image
+# Clone the repository
+git clone https://github.com/danilloestrela/saint.git
+cd saint
+
+# PERMANENT installation - Add to your bash profile
+echo "source $(pwd)/.saint" >> ~/.bashrc    # For Bash
+echo "source $(pwd)/.saint" >> ~/.zshrc     # For Zsh
+
+# Reload your bash for current session
+source ~/.bashrc  # or source ~/.zshrc
+
+# Saint will now load automatically in every new terminal session!
 ```
 
-This help will be displayed in a hierarchical format:
+### First Run
+
+```bash
+# Check if Saint is working
+saint version
+
+# See available commands
+saint help
+
+# Add your first project
+saint add my-project
 ```
-git
-  pull
-    all   Pulls all related projects
-docker
-  build  Builds Docker image
+
+## 📖 Usage
+
+### Basic Commands
+
+```bash
+saint help                 # Show all available commands
+saint version             # Display Saint version information
+saint list                # List all managed projects
+saint add <project>       # Add a new project
+saint delete <project>    # Remove a project
+saint backup <project>    # Create project backup
 ```
-<details>
-<summary><strong>CORE TODOs</strong></summary>
 
-## CORE TODOs
+### Project Management
 
-- [ ] [#1 Explain the architecture and the "whys" of each folder](https://github.com/danilloestrela/saint/issues/1)
-- [ ] [#2 Make setup easier: automate Saint installation on any Linux/Mac/WSL](https://github.com/danilloestrela/saint/issues/2)
-- [ ] [#3 Add common aliases for any project by creating a temp aliases file](https://github.com/danilloestrela/saint/issues/3)
-- [ ] [#4 Create a debugger for errors, enabling or disabling code errors](https://github.com/danilloestrela/saint/issues/4)
-- [ ] [#6 Method that allows arrow keys to select options instead of typing](https://github.com/danilloestrela/saint/issues/6)
-- [ ] [#7 Check for Saint updates automatically](https://github.com/danilloestrela/saint/issues/7)
-- [ ] [#8 Restore a project from a previously created backup](https://github.com/danilloestrela/saint/issues/8)
-- [ ] [#10 Create a way to make each project a Git repository](https://github.com/danilloestrela/saint/issues/10)
-- [ ] [#12 Add Autocomplete for Project Commands (Pure Bash/Zsh)](https://github.com/danilloestrela/saint/issues/12)
-</details>
+```bash
+# Add a new project
+saint add my-awesome-project
 
-### [Project DONEs](DONE.md)
+# Navigate to project
+cd my-awesome-project
+
+# Run project-specific commands
+my-awesome-project run
+my-awesome-project install
+my-awesome-project help
+```
+
+### Auto-Update System
+
+Saint automatically checks for updates every 7 days and notifies you when new versions are available.
+
+```bash
+# Check for updates manually
+saint update check
+
+# View update system status
+saint update status
+
+# Auto-update to latest version
+saint update auto
+
+# Force update to specific version
+saint update force 1.2.0
+
+# Show update help
+saint update
+```
+
+## Configuration
+
+Add project-specific aliases in your project's `.alias` file:
+
+```bash
+# Example .alias file
+alias dev="saint my-project dev"
+alias test="saint my-project test"
+alias deploy="saint my-project deploy"
+```
+
+```bash
+projects/my-project/
+├── .my-project             # Main project file with commands
+├── .mainCommands          # Project command routing
+├── .alias                 # Project-specific aliases
+└── .variables             # Project variables
+```
+
+## 📝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'feat: add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Setup
+
+```bash
+# Clone your fork
+git clone https://github.com/your-username/saint.git
+cd saint
+
+# Add upstream remote
+git remote add upstream https://github.com/danilloestrela/saint.git
+
+# Create feature branch
+git checkout -b feature/your-feature
+
+# Make changes and test
+source .saint
+saint version
+
+# Commit and push
+git add .
+git commit -m "feat: your feature description"
+git push origin feature/your-feature
+```
+
+## 🏷️ Versioning
+
+Saint follows [Semantic Versioning](https://semver.org/):
+
+- **MAJOR** version for incompatible API changes
+- **MINOR** version for backwards-compatible functionality
+- **PATCH** version for backwards-compatible bug fixes
+
+### Release Process
+
+```bash
+# 1. Make changes and commit
+git add .
+git commit -m "feat: new feature"
+git push origin main
+
+# 2. Create release tag
+git tag v1.2.0
+git push origin v1.2.0
+
+# 3. Users get notified automatically!
+```
+
+## 📚 Documentation
+
+- WIP
+
+## 🤝 Support
+
+- **Issues**: [GitHub Issues](https://github.com/danilloestrela/saint/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/danilloestrela/saint/discussions)
+- **Wiki**: [Project Wiki](https://github.com/danilloestrela/saint/wiki)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with ❤️ using bash scripting
+- Inspired by the need for better project management
+- Thanks to all contributors and users
+
+---
+
+**Made with 🤖 by [Danillo Estrela](https://github.com/danilloestrela)**
+
+*Star this repository if it helps you! ⭐*
