@@ -28,19 +28,49 @@ saint_mark_update_check() {
 # Get latest version from GitHub
 saint_get_latest_version() {
     local latest_version=""
+    local response=""
+    local http_code=""
     
-    # Try to get latest release
+    # Try to get latest tag with better error handling
     if command -v curl &> /dev/null; then
-        latest_version=$(curl -s "${SAINT_GITHUB_RELEASES}" | \
-                       grep '"tag_name"' | \
-                       sed 's/.*"tag_name": "v\([^"]*\)".*/\1/' 2>/dev/null)
+        # Use curl with HTTP status code checking and timeout
+        response=$(curl -s -w "%{http_code}" --max-time 10 "${SAINT_GITHUB_API}/tags" 2>/dev/null)
+        http_code="${response: -3}"
+        response="${response%???}"
+        
+        if [ "$http_code" = "200" ] && [ -n "$response" ]; then
+            # Get the first (latest) tag and remove 'v' prefix
+            latest_version=$(echo "$response" | \
+                           grep '"name"' | \
+                           head -1 | \
+                           sed 's/.*"name": "v\([^"]*\)".*/\1/' 2>/dev/null)
+        else
+            saint_debug "GitHub API returned HTTP $http_code"
+            saint_debug "Response: ${response:0:100}..."
+        fi
     elif command -v wget &> /dev/null; then
-        latest_version=$(wget -qO- "${SAINT_GITHUB_RELEASES}" | \
-                       grep '"tag_name"' | \
-                       sed 's/.*"tag_name": "v\([^"]*\)".*/\1/' 2>/dev/null)
+        # Use wget with error checking and timeout
+        response=$(timeout 10 wget -qO- --server-response "${SAINT_GITHUB_API}/tags" 2>&1)
+        if [ $? -eq 0 ]; then
+            # Get the first (latest) tag and remove 'v' prefix
+            latest_version=$(echo "$response" | \
+                           grep '"name"' | \
+                           head -1 | \
+                           sed 's/.*"name": "v\([^"]*\)".*/\1/' 2>/dev/null)
+        else
+            saint_debug "wget failed: $response"
+        fi
+    else
+        saint_debug "Neither curl nor wget is available"
     fi
     
-    echo "$latest_version"
+    # Validate the version format
+    if [ -n "$latest_version" ] && [[ "$latest_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "$latest_version"
+    else
+        saint_debug "Invalid version format received: '$latest_version'"
+        echo ""
+    fi
 }
 
 # Compare versions
@@ -48,8 +78,16 @@ saint_compare_versions() {
     local current="$1"
     local latest="$2"
     
-    if [ -z "$latest" ]; then
+    # Validate inputs
+    if [ -z "$latest" ] || [ -z "$current" ]; then
+        saint_debug "Version comparison failed: current='$current', latest='$latest'"
         return 1  # Can't determine latest version
+    fi
+    
+    # Validate version format
+    if ! [[ "$current" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || ! [[ "$latest" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        saint_debug "Invalid version format: current='$current', latest='$latest'"
+        return 1
     fi
     
     # Simple version comparison (assumes semantic versioning)
@@ -60,6 +98,13 @@ saint_compare_versions() {
     local latest_major=$(echo "$latest" | cut -d. -f1)
     local latest_minor=$(echo "$latest" | cut -d. -f2)
     local latest_patch=$(echo "$latest" | cut -d. -f3)
+    
+    # Validate that all parts are numeric
+    if ! [[ "$current_major" =~ ^[0-9]+$ ]] || ! [[ "$current_minor" =~ ^[0-9]+$ ]] || ! [[ "$current_patch" =~ ^[0-9]+$ ]] || \
+       ! [[ "$latest_major" =~ ^[0-9]+$ ]] || ! [[ "$latest_minor" =~ ^[0-9]+$ ]] || ! [[ "$latest_patch" =~ ^[0-9]+$ ]]; then
+        saint_debug "Non-numeric version parts: current=$current_major.$current_minor.$current_patch, latest=$latest_major.$latest_minor.$latest_patch"
+        return 1
+    fi
     
     # Compare major version
     if [ "$latest_major" -gt "$current_major" ]; then
@@ -92,14 +137,20 @@ saint_show_update_notification() {
     local latest_version="$2"
     local update_type="$3"
     
+    # Capitalize first letter safely
+    local update_type_cap=""
+    if [ -n "$update_type" ]; then
+        update_type_cap=$(echo "$update_type" | sed 's/^./\U&/')
+    fi
+    
     echo ""
     echo "🔄 ${YELLOW}Update Available!${NC}"
     echo "================================"
     echo "Current Version: ${GREEN}${current_version}${NC}"
     echo "Latest Version:  ${GREEN}${latest_version}${NC}"
-    echo "Update Type:     ${GREEN}${update_type^}${NC}"
+    echo "Update Type:     ${GREEN}${update_type_cap}${NC}"
     echo ""
-    echo "To update, run: ${GREEN}saint update${NC}"
+    echo "To update, run: ${GREEN}saint update auto${NC}"
     echo "To check later: ${GREEN}saint update check${NC}"
     echo ""
 }
@@ -110,18 +161,32 @@ saint_check_for_updates() {
     local latest_version=$(saint_get_latest_version)
     
     if [ -z "$latest_version" ]; then
-        saint_msg_status "warning" "Could not check for updates (network issue or API limit)"
+        saint_msg_status "warning" "Could not check for updates"
+        saint_msg_status "info" "Possible causes:"
+        saint_msg_status "info" "  • Network connectivity issues"
+        saint_msg_status "info" "  • GitHub API rate limiting"
+        saint_msg_status "info" "  • GitHub service unavailable"
+        saint_msg_status "info" "  • Missing curl/wget command"
+        saint_msg_status "info" "Try again later or check your internet connection"
         return 1
     fi
     
-    local update_type=$(saint_compare_versions "$current_version" "$latest_version")
+    saint_debug "Comparing versions: current=$current_version, latest=$latest_version"
     
-    if [ $? -eq 0 ]; then
+    local update_type=$(saint_compare_versions "$current_version" "$latest_version")
+    local comparison_result=$?
+    
+    if [ $comparison_result -eq 0 ] && [ -n "$update_type" ]; then
+        saint_debug "Update available: $update_type"
         saint_show_update_notification "$current_version" "$latest_version" "$update_type"
         return 0
+    else
+        saint_debug "No update needed or comparison failed"
+        if [ "$current_version" != "$latest_version" ]; then
+            saint_msg_status "info" "Current version ($current_version) is up to date or newer than latest ($latest_version)"
+        fi
+        return 1
     fi
-    
-    return 1  # No update needed
 }
 
 # Perform automatic update check
