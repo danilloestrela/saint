@@ -351,8 +351,14 @@ saint_download_update() {
     # Store current directory to return later
     local original_dir=$(pwd)
     
-    # Backup current installation
-    local backup_dir="${PROJECT_PATH}_backup_$(date +%Y%m%d_%H%M%S)"
+    # Create backup directory if it doesn't exist
+    local backup_base_dir="${PROJECT_PATH}/backup"
+    if [ ! -d "$backup_base_dir" ]; then
+        mkdir -p "$backup_base_dir"
+    fi
+    
+    # Backup current installation to protected backup folder
+    local backup_dir="${backup_base_dir}/saint_backup_$(date +%Y%m%d_%H%M%S)"
     cp -r "${PROJECT_PATH}" "$backup_dir"
     
     # Copy new files (excluding user-specific directories)
@@ -378,26 +384,25 @@ saint_download_update() {
     saint_msg_status "success" "Saint updated to v${version} successfully!"
     saint_msg_status "info" "Backup saved to: ${backup_dir}"
     echo ""
-    echo "🔄 Reloading Saint automatically..."
+    echo "🔄 Reloading Saint and updating commands automatically..."
     echo ""
     
     # Try to reload Saint automatically
     if saint_reload_saint; then
         saint_msg_status "success" "Saint reloaded successfully!"
-        saint_msg_status "info" "You can now use the new version without restarting your terminal"
         
         # Update all commands automatically for security and new features
         saint_msg_status "info" "Updating all commands automatically..."
         if saint_update_all_commands; then
             saint_msg_status "success" "All commands updated successfully!"
-            saint_msg_status "info" "New features and security improvements are now available"
+            saint_msg_status "success" "Update complete! You can now use all new features without restarting your terminal."
         else
             saint_msg_status "warning" "Command update failed, but Saint is still updated"
             saint_msg_status "info" "Run 'saint update-commands' manually to update commands"
         fi
     else
-        saint_msg_status "warning" "Automatic reload failed"
-        saint_msg_status "info" "Please restart your terminal or run: source ~/.saint"
+        saint_msg_status "error" "Automatic reload failed - this should not happen"
+        saint_msg_status "info" "Please contact support or check the installation"
     fi
     echo ""
 }

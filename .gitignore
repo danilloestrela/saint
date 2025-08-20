@@ -1,6 +1,6 @@
 projects/*
 saint_temp
 ignore
-backup/*
-backups/*
+backups
 .saintDebug
+backup
