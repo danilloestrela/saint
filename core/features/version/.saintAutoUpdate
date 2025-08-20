@@ -125,7 +125,7 @@ saint_is_version_newer() {
     return 1  # version2 is newer or equal
 }
 
-# Compare versions
+# Compare versions and return update type
 saint_compare_versions() {
     local current="$1"
     local latest="$2"
@@ -142,7 +142,7 @@ saint_compare_versions() {
         return 1
     fi
     
-    # Simple version comparison (assumes semantic versioning)
+    # Parse version parts
     local current_major=$(echo "$current" | cut -d. -f1)
     local current_minor=$(echo "$current" | cut -d. -f2)
     local current_patch=$(echo "$current" | cut -d. -f3)
@@ -158,7 +158,7 @@ saint_compare_versions() {
         return 1
     fi
     
-    # Compare major version
+    # Compare versions and return update type
     if [ "$latest_major" -gt "$current_major" ]; then
         echo "major"
         return 0
@@ -166,7 +166,6 @@ saint_compare_versions() {
         return 1
     fi
     
-    # Compare minor version
     if [ "$latest_minor" -gt "$current_minor" ]; then
         echo "minor"
         return 0
@@ -174,7 +173,6 @@ saint_compare_versions() {
         return 1
     fi
     
-    # Compare patch version
     if [ "$latest_patch" -gt "$current_patch" ]; then
         echo "patch"
         return 0
@@ -251,19 +249,16 @@ saint_check_for_updates() {
     fi
 }
 
-# Perform automatic update check
-saint_auto_check_update() {
-    if saint_should_check_update; then
-        saint_check_for_updates
-        saint_mark_update_check
-    fi
-}
+
 
 # Download and install update
 saint_download_update() {
     local version="$1"
     local temp_dir="/tmp/saint_update_$$"
     local archive_url="${SAINT_GITHUB_ARCHIVE}/v${version}.tar.gz"
+    
+    # Store current directory to return later (MUST BE FIRST!)
+    local original_dir=$(pwd)
     
     # Validate version parameter
     if [ -z "$version" ] || ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -306,9 +301,16 @@ saint_download_update() {
     fi
     
     # Validate file size (should be reasonable)
-    local file_size=$(stat -f%z "saint-${version}.tar.gz" 2>/dev/null || stat -c%s "saint-${version}.tar.gz" 2>/dev/null || echo "0")
-    if [ "$file_size" -lt 1000 ]; then  # Less than 1KB is suspicious
+    local file_size=""
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        file_size=$(stat -f%z "saint-${version}.tar.gz" 2>/dev/null || echo "0")
+    else
+        file_size=$(stat -c%s "saint-${version}.tar.gz" 2>/dev/null || echo "0")
+    fi
+    
+    if [ "$file_size" -lt 100000 ]; then  # Less than 100KB is suspicious for Saint
         saint_msg_status "error" "Downloaded file is too small ($file_size bytes), may be corrupted"
+        saint_debug "Expected file size should be > 100KB, got: $file_size bytes"
         cd "$original_dir" 2>/dev/null || cd "$HOME"
         rm -rf "$temp_dir" 2>/dev/null
         return 1
@@ -333,23 +335,27 @@ saint_download_update() {
     
     if [ -z "$extracted_dir" ] || [ ! -d "$extracted_dir" ]; then
         saint_msg_status "error" "Failed to find extracted files or invalid directory structure"
+        saint_debug "Available directories in temp: $(ls -la)"
         cd "$original_dir" 2>/dev/null || cd "$HOME"
         rm -rf "$temp_dir" 2>/dev/null
         return 1
     fi
+    
+    saint_debug "Found extracted directory: $extracted_dir"
     
     # Validate extracted directory contains expected files
     if [ ! -f "${extracted_dir}/.saint" ] || [ ! -d "${extracted_dir}/core" ]; then
         saint_msg_status "error" "Extracted directory does not contain valid Saint installation"
+        saint_debug "Missing required files: .saint exists=$([ -f "${extracted_dir}/.saint" ] && echo "yes" || echo "no"), core exists=$([ -d "${extracted_dir}/core" ] && echo "yes" || echo "no")"
+        saint_debug "Contents of extracted directory: $(ls -la "$extracted_dir")"
         cd "$original_dir" 2>/dev/null || cd "$HOME"
         rm -rf "$temp_dir" 2>/dev/null
         return 1
     fi
     
-    saint_msg_status "info" "Installing update..."
+    saint_debug "Extracted directory validation passed"
     
-    # Store current directory to return later
-    local original_dir=$(pwd)
+    saint_msg_status "info" "Installing update..."
     
     # Create backup directory if it doesn't exist
     local backup_base_dir="${PROJECT_PATH}/backup"
@@ -387,11 +393,11 @@ saint_download_update() {
     # Strategy 2: Use cp with find (fallback)
     if [ "$backup_success" = false ]; then
         saint_debug "Attempting backup with cp + find..."
-        if find "${PROJECT_PATH}" -maxdepth 1 -mindepth 1 -not -name '.git' -not -name 'backup' -exec cp -r {} "$backup_dir/" \; 2>/dev/null; then
+        if find "${PROJECT_PATH}" -maxdepth 1 -mindepth 1 -not -name '.git' -not -name 'backup' -not -name 'saint_temp' -exec cp -r {} "$backup_dir/" \; 2>/dev/null; then
             backup_success=true
             saint_debug "Backup successful with cp + find"
         else
-            saint_debug "cp + find backup failed"
+            saint_debug "cp + find backup failed: $?"
         fi
     fi
     
@@ -402,9 +408,10 @@ saint_download_update() {
         
         # Copy core directories and files manually
         for item in "${PROJECT_PATH}"/*; do
-            if [ -e "$item" ] && [[ "$(basename "$item")" != ".git" ]] && [[ "$(basename "$item")" != "backup" ]]; then
+            if [ -e "$item" ] && [[ "$(basename "$item")" != ".git" ]] && [[ "$(basename "$item")" != "backup" ]] && [[ "$(basename "$item")" != "saint_temp" ]]; then
+                saint_debug "Copying item: $item"
                 if ! cp -r "$item" "$backup_dir/" 2>/dev/null; then
-                    saint_debug "Failed to copy: $item"
+                    saint_debug "Failed to copy: $item (exit code: $?)"
                     copy_success=false
                     break
                 fi
@@ -488,11 +495,16 @@ saint_download_update() {
     fi
     
     # Return to original directory
+    saint_debug "Returning to original directory: $original_dir"
     cd "$original_dir"
+    saint_debug "Current directory after return: $(pwd)"
     
     # Clean up temp directory safely
     if [ -d "$temp_dir" ] && [[ "$temp_dir" == /tmp/saint_update_* ]]; then
-        rm -rf "$temp_dir"
+        saint_debug "Cleaning up temp directory: $temp_dir"
+        if ! rm -rf "$temp_dir" 2>/dev/null; then
+            saint_debug "Failed to clean temp directory: $temp_dir"
+        fi
     fi
     
     saint_msg_status "success" "Saint updated to v${version} successfully!"
