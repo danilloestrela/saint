@@ -361,8 +361,19 @@ saint_download_update() {
     local backup_dir="${backup_base_dir}/saint_backup_$(date +%Y%m%d_%H%M%S)"
     cp -r "${PROJECT_PATH}" "$backup_dir"
     
-    # Copy new files (excluding user-specific directories)
-    cp -r "${extracted_dir}/"* "${PROJECT_PATH}/"
+    # Copy new files (excluding user-specific directories and Git metadata)
+    # Use rsync if available for better control, otherwise use cp with exclusions
+    if command -v rsync &> /dev/null; then
+        # Use rsync to preserve Git state and exclude user directories
+        rsync -av --exclude='.git' --exclude='projects' --exclude='saint_temp' --exclude='backup' "${extracted_dir}/" "${PROJECT_PATH}/"
+    else
+        # Fallback to cp with manual exclusions
+        # First, remove files that will be replaced (excluding user directories)
+        find "${PROJECT_PATH}" -maxdepth 1 -not -name '.' -not -name '.git' -not -name 'projects' -not -name 'saint_temp' -not -name 'backup' -exec rm -rf {} \;
+        
+        # Copy new files
+        cp -r "${extracted_dir}/"* "${PROJECT_PATH}/"
+    fi
     
     # Preserve user projects and configuration
     if [ -d "${backup_dir}/projects" ]; then
@@ -371,6 +382,20 @@ saint_download_update() {
     
     if [ -d "${backup_dir}/saint_temp" ]; then
         cp -r "${backup_dir}/saint_temp" "${PROJECT_PATH}/"
+    fi
+    
+    # Preserve Git metadata to avoid showing files as modified
+    if [ -d "${backup_dir}/.git" ]; then
+        cp -r "${backup_dir}/.git" "${PROJECT_PATH}/"
+    fi
+    
+    # Reset Git state to avoid showing files as modified
+    cd "${PROJECT_PATH}"
+    if [ -d ".git" ]; then
+        # Reset any changes that might have been detected
+        git reset --hard HEAD 2>/dev/null || true
+        # Clean untracked files (but preserve user directories)
+        git clean -fd --exclude=projects --exclude=saint_temp --exclude=backup 2>/dev/null || true
     fi
     
     # Return to original directory
