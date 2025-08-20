@@ -205,6 +205,52 @@ saint_show_update_notification() {
     echo ""
 }
 
+# Check for updates quietly (for initialization)
+saint_check_for_updates_quiet() {
+    saint_debug "Quiet update check initiated"
+    
+    # Only check if enough time has passed since last check
+    if ! saint_should_check_update; then
+        saint_debug "Update check skipped - too soon since last check"
+        return 0
+    fi
+    
+    local current_version="${SAINT_VERSION}"
+    local latest_version=$(saint_get_latest_version)
+    
+    if [ -z "$latest_version" ]; then
+        return 0  # Silent fail for quiet checks
+    fi
+    
+    # Check if this would be a downgrade
+    if saint_is_version_newer "$current_version" "$latest_version"; then
+        return 0  # Silent for quiet checks
+    fi
+    
+    local update_type=$(saint_compare_versions "$current_version" "$latest_version")
+    local comparison_result=$?
+    
+    if [ $comparison_result -eq 0 ] && [ -n "$update_type" ]; then
+        # Show update notification quietly
+        echo ""
+        echo "🔄 ${YELLOW}Update Available!${NC}"
+        echo "================================"
+        echo "Current Version: ${GREEN}${current_version}${NC}"
+        echo "Latest Version:  ${GREEN}${latest_version}${NC}"
+        echo "Update Type:     ${GREEN}$(echo "$update_type" | sed 's/^./\U&/')${NC}"
+        echo ""
+        echo "To update, run: ${GREEN}saint update auto${NC}"
+        echo "To check later: ${GREEN}saint update check${NC}"
+        echo ""
+        
+        # Mark the check as completed
+        saint_mark_update_check
+        return 0
+    fi
+    
+    return 0
+}
+
 # Check for updates
 saint_check_for_updates() {
     local current_version="${SAINT_VERSION}"
@@ -237,6 +283,8 @@ saint_check_for_updates() {
     
     local update_type=$(saint_compare_versions "$current_version" "$latest_version")
     local comparison_result=$?
+    
+    saint_debug "Update check result: comparison_result=$comparison_result, update_type='$update_type'"
     
     if [ $comparison_result -eq 0 ] && [ -n "$update_type" ]; then
         saint_debug "Update available: $update_type"
