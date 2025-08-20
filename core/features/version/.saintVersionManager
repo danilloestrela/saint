@@ -186,14 +186,14 @@ saint_version_tag() {
     # Show files changed in last commit
     git show --name-status --format="" HEAD | while IFS= read -r line; do
         if [[ -n "$line" ]]; then
-            local status=$(echo "$line" | cut -f1)
-            local file=$(echo "$line" | cut -f2)
-            case "$status" in
-                A) echo "  ➕ Added: $file" ;;
-                M) echo "  ✏️  Modified: $file" ;;
-                D) echo "  🗑️  Deleted: $file" ;;
-                R) echo "  🔄 Renamed: $file" ;;
-                *) echo "  ❓ $status: $file" ;;
+            local file_status=$(echo "$line" | cut -f1)
+            local file_name=$(echo "$line" | cut -f2)
+            case "$file_status" in
+                A) echo "  ➕ Added: $file_name" ;;
+                M) echo "  ✏️  Modified: $file_name" ;;
+                D) echo "  🗑️  Deleted: $file_name" ;;
+                R) echo "  🔄 Renamed: $file_name" ;;
+                *) echo "  ❓ $file_status: $file_name" ;;
             esac
         fi
     done
