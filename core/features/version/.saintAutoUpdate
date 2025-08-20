@@ -385,11 +385,139 @@ saint_download_update() {
     if saint_reload_saint; then
         saint_msg_status "success" "Saint reloaded successfully!"
         saint_msg_status "info" "You can now use the new version without restarting your terminal"
+        
+        # Update all commands automatically for security and new features
+        saint_msg_status "info" "Updating all commands automatically..."
+        if saint_update_all_commands; then
+            saint_msg_status "success" "All commands updated successfully!"
+            saint_msg_status "info" "New features and security improvements are now available"
+        else
+            saint_msg_status "warning" "Command update failed, but Saint is still updated"
+            saint_msg_status "info" "Run 'saint update-commands' manually to update commands"
+        fi
     else
         saint_msg_status "warning" "Automatic reload failed"
         saint_msg_status "info" "Please restart your terminal or run: source ~/.saint"
     fi
     echo ""
+}
+
+# Update all commands automatically after update
+saint_update_all_commands() {
+    local original_dir=$(pwd)
+    
+    # Navigate to Saint directory safely
+    if [ ! -d "${PROJECT_PATH}" ]; then
+        saint_debug "PROJECT_PATH not found: ${PROJECT_PATH}"
+        return 1
+    fi
+    
+    cd "${PROJECT_PATH}" || {
+        saint_debug "Failed to navigate to PROJECT_PATH: ${PROJECT_PATH}"
+        return 1
+    }
+    
+    # Update main commands template
+    if saint_sync_main_commands_safe; then
+        saint_debug "Main commands template synced"
+    else
+        saint_debug "Failed to sync main commands template"
+        cd "$original_dir"
+        return 1
+    fi
+    
+    # Update project commands
+    if saint_update_project_commands_safe; then
+        saint_debug "Project commands updated"
+    else
+        saint_debug "Failed to update project commands"
+        cd "$original_dir"
+        return 1
+    fi
+    
+    # Rebuild help system
+    if saint_rebuild_help_safe; then
+        saint_debug "Help system rebuilt"
+    else
+        saint_debug "Failed to rebuild help system"
+        cd "$original_dir"
+        return 1
+    fi
+    
+    # Return to original directory
+    cd "$original_dir"
+    
+    saint_debug "All commands updated successfully"
+    return 0
+}
+
+# Safe version of sync main commands
+saint_sync_main_commands_safe() {
+    local templatePath="${PROJECT_PATH}/templates/saint_temps/.saintMainCommands.txt"
+    local currentFile="${PROJECT_PATH}/saint_temp/.saintMainCommands"
+    
+    if [ ! -f "$templatePath" ]; then
+        saint_debug "Template file not found: $templatePath"
+        return 1
+    fi
+    
+    if [ ! -f "$currentFile" ]; then
+        saint_debug "Current commands file not found: $currentFile"
+        return 1
+    fi
+    
+    # Force sync template
+    cp "$templatePath" "$currentFile"
+    saint_debug "Main commands template synced from template"
+    return 0
+}
+
+# Safe version of update project commands
+saint_update_project_commands_safe() {
+    # Clear commands between BEGIN and END safely
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' "${PROJECT_PATH}/saint_temp/.saintMainCommands"
+    else
+        sed -i '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' "${PROJECT_PATH}/saint_temp/.saintMainCommands"
+    fi
+    
+    # Load project commands
+    if [ -d "${PROJECT_PATH}/projects" ]; then
+        for project in "${PROJECT_PATH}/projects"/*; do
+            if [ -d "$project" ]; then
+                local projName=$(basename "$project")
+                if [ -f "${project}/.${projName}" ]; then
+                    echo "${projName}_help" >> "${PROJECT_PATH}/saint_temp/.saintHelpCommands"
+                fi
+            fi
+        done
+    fi
+    
+    saint_debug "Project commands updated successfully"
+    return 0
+}
+
+# Safe version of rebuild help
+saint_rebuild_help_safe() {
+    local helpFile="${PROJECT_PATH}/saint_temp/.saintHelpCommands"
+    
+    # Clear existing help commands
+    : > "$helpFile"
+    
+    # Add help commands for existing projects
+    if [ -d "${PROJECT_PATH}/projects" ]; then
+        for project in "${PROJECT_PATH}/projects"/*; do
+            if [ -d "$project" ]; then
+                local projName=$(basename "$project")
+                if [ -f "${project}/.${projName}" ]; then
+                    echo "${projName}_help" >> "$helpFile"
+                fi
+            fi
+        done
+    fi
+    
+    saint_debug "Help system rebuilt successfully"
+    return 0
 }
 
 # Reload Saint in current shell
