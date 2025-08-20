@@ -3,3 +3,4 @@ saint_temp
 ignore
 backup/*
 backups/*
+.saintDebug

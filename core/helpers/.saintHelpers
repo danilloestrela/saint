@@ -64,20 +64,32 @@ saint_run_command() {
 
 # Function to handle read command for both Bash and Zsh
 saint_read() {
-  local var_name="$1"
-  local prompt="$2"
-  local input
+    local var_name="$1"
+    local prompt="$2"
+    local input
 
-  if [ -n "$BASH_VERSION" ]; then
-    # For Bash
-    read -p "$prompt" input
-  elif [ -n "$ZSH_VERSION" ]; then
-    # For Zsh
-    read -r "$var_name?$prompt"
-    return
-  fi
+    if [ -n "$BASH_VERSION" ]; then
+        # For Bash
+        read -p "$prompt" input
+    elif [ -n "$ZSH_VERSION" ]; then
+        # For Zsh
+        read -r "$var_name?$prompt"
+        return
+    fi
 
-  eval "$var_name='$input'"
+    eval "$var_name='$input'"
+}
+
+# Function to check if debug mode is active
+saint_is_debug_active() {
+    [[ -f "${SAINT_DEBUG_FILE}" ]]
+}
+
+# Function to show debug message only when debug is active
+saint_debug() {
+    if saint_is_debug_active; then
+        saint_msg_status "debug" "$1"
+    fi
 }
 
 saint_read_path() {

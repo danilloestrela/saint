@@ -16,7 +16,7 @@ saint_version() {
 
 # Check if we're in the Saint repository
 saint_check_saint_repo() {
-    saint_msg_status "debug" "saint_check_saint_repo called"
+    saint_debug "saint_check_saint_repo called"
     
     # Get absolute paths for comparison
     local current_dir=$(pwd)
@@ -29,8 +29,8 @@ saint_check_saint_repo() {
         saint_dir=$(realpath "${PROJECT_PATH}" 2>/dev/null || echo "${PROJECT_PATH}")
     fi
     
-    saint_msg_status "debug" "Current dir: $current_dir"
-    saint_msg_status "debug" "Saint dir: $saint_dir"
+    saint_debug "Current dir: $current_dir"
+    saint_debug "Saint dir: $saint_dir"
     
     # Check if we're in the Saint installation directory
     if [[ "$current_dir" != "$saint_dir" ]]; then
@@ -40,17 +40,17 @@ saint_check_saint_repo() {
         return 1
     fi
     
-    saint_msg_status "debug" "Directory check passed"
+    saint_debug "Directory check passed"
     
     # Check if this is actually the Saint repository
     if [[ ! -f "${PROJECT_PATH}/.saint" ]] || [[ ! -d "${PROJECT_PATH}/core" ]]; then
         saint_msg_status "error" "This doesn't appear to be the Saint repository"
-        saint_msg_status "debug" "Checking for .saint: $([ -f "${PROJECT_PATH}/.saint" ] && echo "EXISTS" || echo "MISSING")"
-        saint_msg_status "debug" "Checking for core/: $([ -d "${PROJECT_PATH}/core" ] && echo "EXISTS" || echo "MISSING")"
+        saint_debug "Checking for .saint: $([ -f "${PROJECT_PATH}/.saint" ] && echo "EXISTS" || echo "MISSING")"
+        saint_debug "Checking for core/: $([ -d "${PROJECT_PATH}/core" ] && echo "EXISTS" || echo "MISSING")"
         return 1
     fi
     
-    saint_msg_status "debug" "Repository check passed"
+    saint_debug "Repository check passed"
     return 0
 }
 
@@ -166,14 +166,14 @@ saint_version_tag() {
     fi
     
     # Check if working directory is clean (no uncommitted changes)
-    saint_msg_status "debug" "Checking working directory status..."
+    saint_debug "Checking working directory status..."
     if ! git diff-index --quiet HEAD --; then
         saint_msg_status "error" "Working directory has uncommitted changes"
         saint_msg_status "info" "Commit or stash changes before creating tag"
         saint_msg_status "info" "Use 'git status' to see changes"
         return 1
     fi
-    saint_msg_status "debug" "Working directory is clean"
+    saint_debug "Working directory is clean"
     
     # Check if tag already exists
     if git tag -l "v${current_version}" | grep -q "v${current_version}"; then
@@ -350,7 +350,7 @@ saint_version_store_state() {
     echo "$current_version" >> "$SAINT_VERSION_HISTORY_FILE"
     echo "$command" >> "$SAINT_VERSION_COMMANDS_FILE"
     
-    saint_msg_status "debug" "Stored in history file: $current_version (command: $command)"
+    saint_debug "Stored in history file: $current_version (command: $command)"
 }
 
 # Restore previous version state

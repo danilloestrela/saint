@@ -187,6 +187,60 @@ saint_handle_update() {
     saint_update_commands "$@"
 }
 
+# Debug command handler
+saint_handle_debug() {
+    case "$1" in
+        on|enable|true|1)
+            touch "${SAINT_DEBUG_FILE}"
+            saint_msg_status "success" "Debug mode enabled"
+            saint_msg_status "info" "Debug file: ${SAINT_DEBUG_FILE}"
+            saint_msg_status "info" "Debug messages will now be displayed"
+            ;;
+        off|disable|false|0)
+            if [[ -f "${SAINT_DEBUG_FILE}" ]]; then
+                rm "${SAINT_DEBUG_FILE}"
+                saint_msg_status "success" "Debug mode disabled"
+                saint_msg_status "info" "Debug messages will no longer be displayed"
+            else
+                saint_msg_status "info" "Debug mode was already disabled"
+            fi
+            ;;
+        status|check)
+            if saint_is_debug_active; then
+                saint_msg_status "success" "Debug mode is ACTIVE"
+                saint_msg_status "info" "Debug file: ${SAINT_DEBUG_FILE}"
+            else
+                saint_msg_status "info" "Debug mode is INACTIVE"
+                saint_msg_status "info" "Use 'saint debug on' to enable"
+            fi
+            ;;
+        help|"")
+            echo "🤖 Saint Debug Management"
+            echo "========================"
+            echo ""
+            echo "Available commands:"
+            echo ""
+            echo "on|enable|true|1     - Enable debug mode"
+            echo "off|disable|false|0  - Disable debug mode"
+            echo "status|check         - Check debug mode status"
+            echo "help                 - Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  saint debug on          # Enable debug mode"
+            echo "  saint debug off         # Disable debug mode"
+            echo "  saint debug status      # Check current status"
+            echo ""
+            echo "Debug messages will only appear when debug mode is active"
+            echo "Debug file location: ${SAINT_DEBUG_FILE}"
+            ;;
+        *)
+            saint_msg_status "error" "Unknown debug command: $1"
+            saint_msg_status "info" "Use 'saint debug help' for available commands"
+            return 1
+            ;;
+    esac
+}
+
 # Handle version management commands
 saint_handle_version() {
     case "$1" in

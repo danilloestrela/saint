@@ -39,6 +39,9 @@ local SAINT_GITHUB_ARCHIVE="https://github.com/${SAINT_GITHUB_REPO}/archive/refs
 local SAINT_UPDATE_CHECK_FILE="${HOME}/.saint_update_check"
 local SAINT_UPDATE_INTERVAL=7
 
+# Debug system variables
+export SAINT_DEBUG_FILE="${SAINT_TEMP_FOLDER}/.saintDebug"
+
 # Color bash variables
 if command -v tput &> /dev/null; then
   # COLORS
