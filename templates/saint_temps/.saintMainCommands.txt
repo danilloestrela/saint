@@ -9,6 +9,7 @@
         help) saint_help ;;
         version) saint_handle_version ${@:2} ;;
         debug) saint_handle_debug ${@:2} ;;
+        reload) saint_handle_reload ;;
         update) saint_handle_update ${@:2} ;;
         update-commands) saint_update_project_commands ;;
         sync-commands) saint_sync_main_commands ;;

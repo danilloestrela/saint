@@ -187,6 +187,11 @@ saint_handle_update() {
     saint_update_commands "$@"
 }
 
+# Reload command handler
+saint_handle_reload() {
+    saint_reload
+}
+
 # Debug command handler
 saint_handle_debug() {
     case "$1" in

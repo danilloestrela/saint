@@ -92,6 +92,35 @@ saint_debug() {
     fi
 }
 
+# Function to reload Saint in current shell
+saint_reload() {
+    local saint_file=""
+    
+    # Try to find .saint file
+    if [ -f "${HOME}/.saint" ]; then
+        saint_file="${HOME}/.saint"
+    elif [ -f "${PROJECT_PATH}/.saint" ]; then
+        saint_file="${PROJECT_PATH}/.saint"
+    else
+        saint_msg_status "error" "No .saint file found"
+        saint_msg_status "info" "Make sure Saint is properly installed"
+        return 1
+    fi
+    
+    saint_msg_status "info" "Reloading Saint from: $saint_file"
+    
+    # Try to reload Saint
+    if source "$saint_file" 2>/dev/null; then
+        saint_msg_status "success" "Saint reloaded successfully!"
+        saint_msg_status "info" "All functions and aliases are now updated"
+        return 0
+    else
+        saint_msg_status "error" "Failed to reload Saint"
+        saint_msg_status "info" "Please restart your terminal or check the installation"
+        return 1
+    fi
+}
+
 saint_read_path() {
   local var_name="$1"
   local prompt="$2"

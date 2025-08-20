@@ -73,6 +73,58 @@ saint_get_latest_version() {
     fi
 }
 
+# Check if first version is newer than second version
+saint_is_version_newer() {
+    local version1="$1"
+    local version2="$2"
+    
+    # Validate inputs
+    if [ -z "$version1" ] || [ -z "$version2" ]; then
+        return 1  # Can't compare
+    fi
+    
+    # Validate version format
+    if ! [[ "$version1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || ! [[ "$version2" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        return 1
+    fi
+    
+    # Parse version parts
+    local v1_major=$(echo "$version1" | cut -d. -f1)
+    local v1_minor=$(echo "$version1" | cut -d. -f2)
+    local v1_patch=$(echo "$version1" | cut -d. -f3)
+    
+    local v2_major=$(echo "$version2" | cut -d. -f1)
+    local v2_minor=$(echo "$version2" | cut -d. -f2)
+    local v2_patch=$(echo "$version2" | cut -d. -f3)
+    
+    # Validate that all parts are numeric
+    if ! [[ "$v1_major" =~ ^[0-9]+$ ]] || ! [[ "$v1_minor" =~ ^[0-9]+$ ]] || ! [[ "$v1_patch" =~ ^[0-9]+$ ]] || \
+       ! [[ "$v2_major" =~ ^[0-9]+$ ]] || ! [[ "$v2_minor" =~ ^[0-9]+$ ]] || ! [[ "$v2_patch" =~ ^[0-9]+$ ]]; then
+        return 1
+    fi
+    
+    # Compare major version
+    if [ "$v1_major" -gt "$v2_major" ]; then
+        return 0  # version1 is newer
+    elif [ "$v1_major" -lt "$v2_major" ]; then
+        return 1  # version2 is newer
+    fi
+    
+    # Compare minor version
+    if [ "$v1_minor" -gt "$v2_minor" ]; then
+        return 0  # version1 is newer
+    elif [ "$v1_minor" -lt "$v2_minor" ]; then
+        return 1  # version2 is newer
+    fi
+    
+    # Compare patch version
+    if [ "$v1_patch" -gt "$v2_patch" ]; then
+        return 0  # version1 is newer
+    fi
+    
+    return 1  # version2 is newer or equal
+}
+
 # Compare versions
 saint_compare_versions() {
     local current="$1"
@@ -173,6 +225,18 @@ saint_check_for_updates() {
     
     saint_debug "Comparing versions: current=$current_version, latest=$latest_version"
     
+    # Check if this would be a downgrade
+    if saint_is_version_newer "$current_version" "$latest_version"; then
+        saint_msg_status "warning" "Downgrade detected!"
+        saint_msg_status "info" "Current version ($current_version) is NEWER than latest available ($latest_version)"
+        saint_msg_status "info" "This usually means:"
+        saint_msg_status "info" "  • You have local development changes"
+        saint_msg_status "info" "  • GitHub repository is outdated"
+        saint_msg_status "info" "  • You're ahead of the remote repository"
+        saint_msg_status "info" "No update needed - you're already ahead!"
+        return 1
+    fi
+    
     local update_type=$(saint_compare_versions "$current_version" "$latest_version")
     local comparison_result=$?
     
@@ -182,9 +246,7 @@ saint_check_for_updates() {
         return 0
     else
         saint_debug "No update needed or comparison failed"
-        if [ "$current_version" != "$latest_version" ]; then
-            saint_msg_status "info" "Current version ($current_version) is up to date or newer than latest ($latest_version)"
-        fi
+        saint_msg_status "info" "Current version ($current_version) is up to date"
         return 1
     fi
 }
@@ -262,8 +324,38 @@ saint_download_update() {
     saint_msg_status "success" "Saint updated to v${version} successfully!"
     saint_msg_status "info" "Backup saved to: ${backup_dir}"
     echo ""
-    echo "🔄 Please restart your terminal or run: source ~/.saint"
+    echo "🔄 Reloading Saint automatically..."
     echo ""
+    
+    # Try to reload Saint automatically
+    if saint_reload_saint; then
+        saint_msg_status "success" "Saint reloaded successfully!"
+        saint_msg_status "info" "You can now use the new version without restarting your terminal"
+    else
+        saint_msg_status "warning" "Automatic reload failed"
+        saint_msg_status "info" "Please restart your terminal or run: source ~/.saint"
+    fi
+    echo ""
+}
+
+# Reload Saint in current shell
+saint_reload_saint() {
+    local saint_file="${HOME}/.saint"
+    
+    # Check if .saint exists in home directory
+    if [ ! -f "$saint_file" ]; then
+        saint_debug "No .saint file found in home directory"
+        return 1
+    fi
+    
+    # Try to reload Saint
+    if source "$saint_file" 2>/dev/null; then
+        saint_debug "Saint reloaded successfully"
+        return 0
+    else
+        saint_debug "Failed to reload Saint"
+        return 1
+    fi
 }
 
 # Update command handler
@@ -278,6 +370,13 @@ saint_update_commands() {
         "auto")
             local latest_version=$(saint_get_latest_version)
             if [ -n "$latest_version" ]; then
+                # Double-check: prevent downgrade
+                if saint_is_version_newer "${SAINT_VERSION}" "$latest_version"; then
+                    saint_msg_status "error" "ABORTED: This would be a downgrade!"
+                    saint_msg_status "info" "Current version (${SAINT_VERSION}) is NEWER than latest available ($latest_version)"
+                    saint_msg_status "info" "Use 'saint update force $latest_version' if you really want to downgrade"
+                    return 1
+                fi
                 saint_download_update "$latest_version"
             else
                 saint_msg_status "error" "Could not determine latest version"
@@ -289,6 +388,22 @@ saint_update_commands() {
                 saint_msg_status "error" "Version number required: saint update force <version>"
                 return 1
             fi
+            
+            # Warn about potential downgrade
+            if saint_is_version_newer "${SAINT_VERSION}" "$version"; then
+                saint_msg_status "warning" "⚠️  WARNING: This will DOWNGRADE your installation!"
+                saint_msg_status "info" "Current version: ${SAINT_VERSION}"
+                saint_msg_status "info" "Target version: $version"
+                saint_msg_status "info" "This will overwrite your local changes!"
+                
+                local confirm
+                saint_read confirm "Are you sure you want to continue? (type 'yes' to confirm): "
+                if [ "$confirm" != "yes" ]; then
+                    saint_msg_status "info" "Update cancelled"
+                    return 1
+                fi
+            fi
+            
             saint_download_update "$version"
             ;;
         "status")
