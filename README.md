@@ -200,6 +200,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with 🤖 by [Danillo Estrela](https://github.com/danilloestrela)**
+**[Danillo Estrela](https://github.com/danilloestrela)**
 
 *Star this repository if it helps you! ⭐*
