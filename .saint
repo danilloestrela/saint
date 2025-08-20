@@ -5,7 +5,7 @@
 BRAINILLO_FIRST_EXECUTION=true
 
 # Saint Version - Simple and clean
-SAINT_VERSION="1.2.0"
+SAINT_VERSION="1.2.1"
 
 saint () {
   # Config
