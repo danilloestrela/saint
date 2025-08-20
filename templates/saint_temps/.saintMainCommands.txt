@@ -7,9 +7,10 @@
         edit) saint_cd_open_code ${PROJECT_PATH};;
         list) saint_project_list ;;
         help) saint_help ;;
-        version) saint_version ;;
+        version) saint_handle_version ${@:2} ;;
         update) saint_handle_update ${@:2} ;;
         update-commands) saint_update_project_commands ;;
+        sync-commands) saint_sync_main_commands ;;
         update-help) saint_rebuild_help ;;
         #BEGIN-MAIN-COMMANDS
         #END-MAIN-COMMANDS

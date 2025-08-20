@@ -5,7 +5,7 @@
 BRAINILLO_FIRST_EXECUTION=true
 
 # Saint Version - Simple and clean
-SAINT_VERSION="1.0.0"
+SAINT_VERSION="1.1.0"
 
 saint () {
   # Config
@@ -24,17 +24,11 @@ saint () {
   #  projectCommand should be used as a string to show the method command.
   local projectCommand='saint'
 
-  # Simple version command
-  if [ "$1" = "version" ]; then
-    saint_version
-    return 0
-  fi
+  # Load variables FIRST before using them
+  source ${PROJECT_PATH}/core/variables/.saintVariables
 
   # Adds saint custom Alias
   source ${PROJECT_PATH}/core/.saintCustomAlias
-
-  # Other projects variables required
-  source ${PROJECT_PATH}/core/variables/.saintVariables
 
   # Required: Helpers
   source ${PROJECT_PATH}/core/helpers/.saintHelpers

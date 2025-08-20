@@ -1,0 +1,407 @@
+#!/bin/bash
+
+# Saint Version Manager
+# Provides version bumping and tagging functionality
+
+# Version function - shows current Saint version information
+saint_version() {
+    echo ""
+    echo "🤖 Saint Version Information"
+    echo "============================"
+    echo "Version: ${GREEN}${SAINT_VERSION}${NC}"
+    echo "Last Commit: ${YELLOW}$(cd "${PROJECT_PATH}" && git rev-parse --short HEAD 2>/dev/null || echo 'N/A')${NC}"
+    echo "Last Updated: ${YELLOW}$(cd "${PROJECT_PATH}" && git log -1 --format='%cd' --date=short 2>/dev/null || echo 'N/A')${NC}"
+    echo ""
+}
+
+# Check if we're in the Saint repository
+saint_check_saint_repo() {
+    # Get absolute paths for comparison
+    local current_dir=$(pwd)
+    local saint_dir=$(realpath "${PROJECT_PATH}" 2>/dev/null || echo "${PROJECT_PATH}")
+    
+    # Check if we're in the Saint installation directory
+    if [[ "$current_dir" != "$saint_dir" ]]; then
+        saint_msg_status "error" "Version commands can only be run from the Saint repository"
+        saint_msg_status "info" "Current directory: $current_dir"
+        saint_msg_status "info" "Saint repository: $saint_dir"
+        return 1
+    fi
+    
+    # Check if this is actually the Saint repository
+    if [[ ! -f "${PROJECT_PATH}/.saint" ]] || [[ ! -d "${PROJECT_PATH}/core" ]]; then
+        saint_msg_status "error" "This doesn't appear to be the Saint repository"
+        saint_msg_status "debug" "Checking for .saint: $([ -f "${PROJECT_PATH}/.saint" ] && echo "EXISTS" || echo "MISSING")"
+        saint_msg_status "debug" "Checking for core/: $([ -d "${PROJECT_PATH}/core" ] && echo "EXISTS" || echo "MISSING")"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Bump version
+saint_version_bump() {
+    saint_check_saint_repo || return 1
+    
+    local bump_type="$1"
+    
+    if [[ -z "$bump_type" ]]; then
+        saint_msg_status "error" "Please specify bump type: patch, minor, or major"
+        return 1
+    fi
+    
+    # Store current version state before making changes
+    saint_version_store_state "bump $bump_type"
+    
+    # Parse current version using cut instead of read -ra
+    local major=$(echo "$SAINT_VERSION" | cut -d. -f1)
+    local minor=$(echo "$SAINT_VERSION" | cut -d. -f2)
+    local patch=$(echo "$SAINT_VERSION" | cut -d. -f3)
+    
+    # Validate version parts are numeric
+    if ! [[ "$major" =~ ^[0-9]+$ ]] || ! [[ "$minor" =~ ^[0-9]+$ ]] || ! [[ "$patch" =~ ^[0-9]+$ ]]; then
+        saint_msg_status "error" "Invalid version format: $SAINT_VERSION"
+        saint_msg_status "info" "Expected format: X.Y.Z (e.g., 1.0.0)"
+        # Remove the stored state since we're not proceeding
+        unset "saint_version_history[-1]"
+        unset "saint_version_history_commands[-1]"
+        saint_version_history=("${saint_version_history[@]}")
+        saint_version_history_commands=("${saint_version_history_commands[@]}")
+        return 1
+    fi
+    
+    # Calculate new version based on bump type
+    case "$bump_type" in
+        patch)
+            patch=$((patch + 1))
+            ;;
+        minor)
+            minor=$((minor + 1))
+            patch=0
+            ;;
+        major)
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+        *)
+            saint_msg_status "error" "Invalid bump type: $bump_type"
+            saint_msg_status "info" "Valid types: patch, minor, major"
+            # Remove the stored state since we're not proceeding
+            unset "saint_version_history[-1]"
+            unset "saint_version_history_commands[-1]"
+            saint_version_history=("${saint_version_history[@]}")
+            saint_version_history_commands=("${saint_version_history_commands[@]}")
+            return 1
+            ;;
+    esac
+    
+    local new_version="$major.$minor.$patch"
+    saint_msg_status "info" "Bumping version: $SAINT_VERSION → $new_version"
+    
+    # Update the .saint file
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/SAINT_VERSION=\"$SAINT_VERSION\"/SAINT_VERSION=\"$new_version\"/" "${PROJECT_PATH}/.saint"
+    else
+        sed -i "s/SAINT_VERSION=\"$SAINT_VERSION\"/SAINT_VERSION=\"$new_version\"/" "${PROJECT_PATH}/.saint"
+    fi
+    
+    # Verify the change was made
+    if grep -q "SAINT_VERSION=\"$new_version\"" "${PROJECT_PATH}/.saint"; then
+        saint_msg_status "success" "Version bumped to $new_version"
+        saint_msg_status "info" "Use 'saint version undo' to revert if needed"
+        
+        # Update the SAINT_VERSION variable directly instead of full reload
+        SAINT_VERSION="$new_version"
+        saint_msg_status "info" "Version variable updated to $SAINT_VERSION"
+    else
+        saint_msg_status "error" "Failed to bump version"
+        # Remove the stored state since the operation failed
+        if [[ -f "$SAINT_VERSION_HISTORY_FILE" ]] && [[ -s "$SAINT_VERSION_HISTORY_FILE" ]]; then
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' '$d' "$SAINT_VERSION_HISTORY_FILE"
+                sed -i '' '$d' "$SAINT_VERSION_COMMANDS_FILE"
+            else
+                sed -i '$d' "$SAINT_VERSION_HISTORY_FILE"
+                sed -i '$d' "$SAINT_VERSION_COMMANDS_FILE"
+            fi
+        fi
+        return 1
+    fi
+}
+
+# Create git tag for current version
+saint_version_tag() {
+    saint_check_saint_repo || return 1
+    
+    local current_version="${SAINT_VERSION}"
+    
+    # Check if we're in a git repository
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        saint_msg_status "error" "Not in a git repository"
+        saint_msg_status "info" "Initialize git first: git init"
+        return 1
+    fi
+    
+    # Check if we have any commits
+    if ! git rev-parse HEAD > /dev/null 2>&1; then
+        saint_msg_status "error" "No commits found in repository"
+        saint_msg_status "info" "Make at least one commit before creating tags"
+        return 1
+    fi
+    
+    # Check if working directory is clean (no uncommitted changes)
+    if ! git diff-index --quiet HEAD --; then
+        saint_msg_status "error" "Working directory has uncommitted changes"
+        saint_msg_status "info" "Commit or stash changes before creating tag"
+        saint_msg_status "info" "Use 'git status' to see changes"
+        return 1
+    fi
+    
+    # Check if tag already exists
+    if git tag -l "v${current_version}" | grep -q "v${current_version}"; then
+        saint_msg_status "warning" "Tag v${current_version} already exists"
+        saint_msg_status "info" "Delete existing tag: git tag -d v${current_version}"
+        return 1
+    fi
+    
+    # Show what will be tagged
+    echo ""
+    echo "🤖 Git Tag Preview"
+    echo "=================="
+    echo "Version to tag: ${GREEN}v${current_version}${NC}"
+    echo ""
+    echo "📝 Commits that will be tagged:"
+    echo "-------------------------------"
+    
+    # Show last 5 commits with details
+    git log --oneline -5 --graph --decorate | while IFS= read -r line; do
+        echo "  $line"
+    done
+    
+    echo ""
+    echo "📋 Summary of changes:"
+    echo "----------------------"
+    
+    # Show files changed in last commit
+    git show --name-status --format="" HEAD | while IFS= read -r line; do
+        if [[ -n "$line" ]]; then
+            local status=$(echo "$line" | cut -f1)
+            local file=$(echo "$line" | cut -f2)
+            case "$status" in
+                A) echo "  ➕ Added: $file" ;;
+                M) echo "  ✏️  Modified: $file" ;;
+                D) echo "  🗑️  Deleted: $file" ;;
+                R) echo "  🔄 Renamed: $file" ;;
+                *) echo "  ❓ $status: $file" ;;
+            esac
+        fi
+    done
+    
+    echo ""
+    echo "⚠️  This will create a permanent tag 'v${current_version}'"
+    echo "   Tags cannot be easily modified once created"
+    echo ""
+    
+    # Ask for confirmation using existing saint_read function
+    local confirm_response
+    saint_read "confirm_response" "Do you want to create tag v${current_version}? (Y/n): "
+    
+    # Handle response (default to Yes if empty)
+    if [[ -z "$confirm_response" ]] || [[ "$confirm_response" =~ ^[Yy]$ ]] || [[ "$confirm_response" =~ ^[Yy][Ee][Ss]$ ]]; then
+        saint_msg_status "info" "Creating tag v${current_version}..."
+        
+        # Create tag
+        if git tag "v${current_version}"; then
+            saint_msg_status "success" "Git tag v${current_version} created successfully"
+            saint_msg_status "info" "Use 'git push origin v${current_version}' to push the tag"
+            saint_msg_status "info" "Or push all tags: git push --tags"
+        else
+            saint_msg_status "error" "Failed to create git tag"
+            return 1
+        fi
+    else
+        saint_msg_status "info" "Tag creation cancelled by user"
+        return 0
+    fi
+}
+
+# Undo last version change
+saint_version_undo() {
+    saint_check_saint_repo || return 1
+    
+    # Use the new history system
+    saint_version_restore_state
+}
+
+# Check and sync version between file and variable
+saint_version_sync() {
+    # Check if we're in Saint repository
+    if ! saint_check_saint_repo; then
+        return 1
+    fi
+    
+    # Get version from file
+    local file_version=$(grep '^SAINT_VERSION=' "${PROJECT_PATH}/.saint" | cut -d'"' -f2)
+    local variable_version="${SAINT_VERSION}"
+    
+    echo ""
+    echo "🤖 Saint Version Status"
+    echo "======================="
+    echo "File version:    ${GREEN}${file_version}${NC}"
+    echo "Variable version: ${GREEN}${variable_version}${NC}"
+    
+    if [[ "$file_version" == "$variable_version" ]]; then
+        saint_msg_status "success" "Versions are synchronized"
+    else
+        saint_msg_status "warning" "Versions are out of sync"
+        saint_msg_status "info" "Reloading Saint to synchronize..."
+        source "${PROJECT_PATH}/.saint"
+        
+        # Check again after reload
+        local new_variable_version="${SAINT_VERSION}"
+        if [[ "$file_version" == "$new_variable_version" ]]; then
+            saint_msg_status "success" "Versions synchronized successfully"
+        else
+            saint_msg_status "error" "Failed to synchronize versions"
+            saint_msg_status "info" "You may need to restart your terminal"
+        fi
+    fi
+}
+
+# Show version management help
+saint_version_help() {
+    echo "🤖 Saint Version Management"
+    echo "=========================="
+    echo ""
+    echo "Note: These commands only work from the Saint repository directory"
+    echo ""
+    echo "Available commands:"
+    echo ""
+    echo "bump <type>          - Bump version (patch, minor, major) [-b]"
+    echo "tag                  - Create git tag for current version [-t]"
+    echo "undo                 - Undo last version change [-u]"
+    echo "history              - Show version change history [-i]"
+    echo "sync                 - Check and sync version between file and variable [-s]"
+    echo "help                 - Show this help message [-h]"
+    echo ""
+    echo "Examples:"
+    echo "  saint version bump patch    # 1.0.0 → 1.0.1"
+    echo "  saint version -b minor      # 1.0.0 → 1.1.0 (using shortcut)"
+    echo "  saint version bump major    # 1.0.0 → 2.0.0"
+    echo "  saint version tag           # Create git tag v1.0.0"
+    echo "  saint version -t            # Same as above (using shortcut)"
+    echo "  saint version undo          # Revert to previous version"
+    echo "  saint version -u            # Same as above (using shortcut)"
+    echo "  saint version history       # Show change history"
+    echo "  saint version -i            # Same as above (using shortcut)"
+    echo "  saint version sync          # Check version synchronization"
+    echo "  saint version -s            # Same as above (using shortcut)"
+    echo ""
+    echo "Tag Requirements:"
+    echo "  ✓ Must be in git repository"
+    echo "  ✓ Must have at least one commit"
+    echo "  ✓ Working directory must be clean (no uncommitted changes)"
+    echo "  ✓ Tag must not already exist"
+    echo ""
+    echo "Usage:"
+    echo "  1. Navigate to Saint repository: cd /path/to/saint"
+    echo "  2. Run version commands: saint version bump patch"
+    echo "  3. Commit changes: git add . && git commit -m 'Bump version'"
+    echo "  4. Create tag: saint version tag"
+    echo ""
+    echo "Undo System:"
+    echo "  All version changes are tracked in history"
+    echo "  Use 'saint version undo' to revert the last change"
+    echo "  Use 'saint version history' to see available changes"
+    echo "  SAINT_VERSION is preserved as the current stable version"
+    echo ""
+    echo "Shortcuts:"
+    echo "  -b: bump, -t: tag, -u: undo, -i: history, -s: sync, -h: help"
+}
+
+# Version history management - use temporary files for persistence
+SAINT_VERSION_HISTORY_FILE="${SAINT_TEMP_FOLDER}/.saintVersionHistory"
+SAINT_VERSION_COMMANDS_FILE="${SAINT_TEMP_FOLDER}/.saintVersionCommands"
+
+# Store version state before any change
+saint_version_store_state() {
+    local command="$1"
+    local current_version="$SAINT_VERSION"
+    
+    # Store current state in temporary files
+    echo "$current_version" >> "$SAINT_VERSION_HISTORY_FILE"
+    echo "$command" >> "$SAINT_VERSION_COMMANDS_FILE"
+    
+    saint_msg_status "debug" "Stored in history file: $current_version (command: $command)"
+}
+
+# Restore previous version state
+saint_version_restore_state() {
+    # Check if history files exist and have content
+    if [[ ! -f "$SAINT_VERSION_HISTORY_FILE" ]] || [[ ! -s "$SAINT_VERSION_HISTORY_FILE" ]]; then
+        saint_msg_status "error" "No version history to restore"
+        return 1
+    fi
+    
+    # Get the last stored version from files
+    local previous_version=$(tail -n 1 "$SAINT_VERSION_HISTORY_FILE")
+    local previous_command=$(tail -n 1 "$SAINT_VERSION_COMMANDS_FILE")
+    
+    saint_msg_status "info" "Restoring version from $SAINT_VERSION to $previous_version"
+    saint_msg_status "info" "Undoing command: $previous_command"
+    
+    # Update the .saint file
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/SAINT_VERSION=\"$SAINT_VERSION\"/SAINT_VERSION=\"$previous_version\"/" "${PROJECT_PATH}/.saint"
+    else
+        sed -i "s/SAINT_VERSION=\"$SAINT_VERSION\"/SAINT_VERSION=\"$previous_version\"/" "${PROJECT_PATH}/.saint"
+    fi
+    
+    # Verify the change was made
+    if grep -q "SAINT_VERSION=\"$previous_version\"" "${PROJECT_PATH}/.saint"; then
+        saint_msg_status "success" "Version restored to $previous_version"
+        
+        # Update the SAINT_VERSION variable directly instead of full reload
+        SAINT_VERSION="$previous_version"
+        
+        # Remove the last entry from history files
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '$d' "$SAINT_VERSION_HISTORY_FILE"
+            sed -i '' '$d' "$SAINT_VERSION_COMMANDS_FILE"
+        else
+            sed -i '$d' "$SAINT_VERSION_HISTORY_FILE"
+            sed -i '$d' "$SAINT_VERSION_COMMANDS_FILE"
+        fi
+        
+        saint_msg_status "info" "Version variable updated to $SAINT_VERSION"
+    else
+        saint_msg_status "error" "Failed to restore version"
+        return 1
+    fi
+}
+
+# Show version history
+saint_version_history_show() {
+    if [[ ! -f "$SAINT_VERSION_HISTORY_FILE" ]] || [[ ! -s "$SAINT_VERSION_HISTORY_FILE" ]]; then
+        saint_msg_status "info" "No version history available"
+        return
+    fi
+    
+    echo ""
+    echo "🤖 Version History"
+    echo "=================="
+    echo "Current version: $SAINT_VERSION"
+    echo ""
+    echo "Available to undo:"
+    
+    # Read history from files
+    local line_number=1
+    while IFS= read -r version && IFS= read -r command <&3; do
+        echo "  $line_number. $version (command: $command)"
+        ((line_number++))
+    done < "$SAINT_VERSION_HISTORY_FILE" 3< "$SAINT_VERSION_COMMANDS_FILE"
+    
+    echo ""
+    echo "Use 'saint version undo' to restore the last change"
+}

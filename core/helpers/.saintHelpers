@@ -114,4 +114,4 @@ source "${PROJECT_PATH}/core/features/helpers/saint_docker_helpers/.saintDockerH
 source "${PROJECT_PATH}/core/features/helpers/saint_git_helpers/.saintGitHelpers"
 source "${PROJECT_PATH}/core/features/helpers/saint_select_option/.saintSelectOption"
 source "${PROJECT_PATH}/core/features/version/.saintAutoUpdate"
-source "${PROJECT_PATH}/core/features/version/.saintVersion"
+source "${PROJECT_PATH}/core/features/version/.saintVersionManager"

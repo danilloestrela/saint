@@ -19,10 +19,10 @@ else
 fi
 
 # This is were the temp files for commands will be loaded. Your data will not be mixed with the saint core.
-local SAINT_TEMP_FOLDER=${PROJECT_PATH}/saint_temp
-local SAINT_PROJECTS_FOLDER=${PROJECT_PATH}/${projectsDir}
-local SAINT_METHODS_MAIN_COMMANDS_FILE=${SAINT_TEMP_FOLDER}/.saintMainCommands
-local SAINT_METHODS_MAIN_HELP_FILE=${SAINT_TEMP_FOLDER}/.saintHelpCommands
+export SAINT_TEMP_FOLDER=${PROJECT_PATH}/saint_temp
+export SAINT_PROJECTS_FOLDER=${PROJECT_PATH}/${projectsDir}
+export SAINT_METHODS_MAIN_COMMANDS_FILE=${SAINT_TEMP_FOLDER}/.saintMainCommands
+export SAINT_METHODS_MAIN_HELP_FILE=${SAINT_TEMP_FOLDER}/.saintHelpCommands
 
 # Core paths structure
 local SAINT_CORE_PATH=${PROJECT_PATH}/core

@@ -71,9 +71,9 @@ saint_remove_command() {
   local project_name=$1
   local command="\ \ \ \ \ \ \ \ ${project_name}) ${project_name}_main_commands \"\${projectCommand} \$1\" \${@:2};;"
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' "\|${command}|d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+    sed -i '' "/${command}/d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
   else
-    sed -i "\|${command}|d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+    sed -i "/${command}/d" ${SAINT_METHODS_MAIN_COMMANDS_FILE}
   fi
 }
 
@@ -116,11 +116,52 @@ saint_load_project_commands() {
 }
 
 saint_update_project_commands() {
+  # Check if template has been updated and sync if necessary
+  local templatePath="${PROJECT_PATH}/templates/saint_temps/.saintMainCommands.txt"
+  local currentFile="${SAINT_METHODS_MAIN_COMMANDS_FILE}"
+  
+  # Compare template with current file to see if update is needed
+  if [ -f "$templatePath" ] && [ -f "$currentFile" ]; then
+    if ! cmp -s "$templatePath" "$currentFile"; then
+      saint_msg_status "info" "Template has been updated, syncing main commands..."
+      # Copy template to current file
+      cp "$templatePath" "$currentFile"
+      saint_msg_status "success" "Main commands template synced"
+    fi
+  fi
+  
   # Clear commands between BEGIN and END
-  sed -i '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+  else
+    sed -i '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' ${SAINT_METHODS_MAIN_COMMANDS_FILE}
+  fi
 
   saint_load_project_commands
   saint_msg_status "success" "Project commands updated successfully."
+}
+
+# Force sync main commands template
+saint_sync_main_commands() {
+  local templatePath="${PROJECT_PATH}/templates/saint_temps/.saintMainCommands.txt"
+  local currentFile="${SAINT_METHODS_MAIN_COMMANDS_FILE}"
+  
+  if [ ! -f "$templatePath" ]; then
+    saint_msg_status "error" "Template file not found: $templatePath"
+    return 1
+  fi
+  
+  if [ ! -f "$currentFile" ]; then
+    saint_msg_status "error" "Current commands file not found: $currentFile"
+    return 1
+  fi
+  
+  # Force sync template
+  cp "$templatePath" "$currentFile"
+  saint_msg_status "success" "Main commands template synced from template"
+  
+  # Reload project commands
+  saint_update_project_commands
 }
 
 saint_initialize_main_commands() {
@@ -146,6 +187,37 @@ saint_handle_update() {
     saint_update_commands "$@"
 }
 
+# Handle version management commands
+saint_handle_version() {
+    case "$1" in
+        bump|-b)
+            saint_version_bump "$2"
+            ;;
+        tag|-t)
+            saint_version_tag
+            ;;
+        undo|-u)
+            saint_version_undo
+            ;;
+        history|-i)
+            saint_version_history_show
+            ;;
+        sync|-s)
+            saint_version_sync
+            ;;
+        help|-h)
+            saint_version_help
+            ;;
+        "")
+            saint_version
+            ;;
+        *)
+            saint_msg_status "error" "Unknown version command: $1"
+            saint_msg_status "info" "Use 'saint version help' for available commands"
+            return 1
+            ;;
+    esac
+}
 
 
 source "${PROJECT_PATH}/core/features/methods/saint_help_manager/.saintHelpManager"
