@@ -18,7 +18,14 @@ saint_version() {
 saint_check_saint_repo() {
     # Get absolute paths for comparison
     local current_dir=$(pwd)
-    local saint_dir=$(realpath "${PROJECT_PATH}" 2>/dev/null || echo "${PROJECT_PATH}")
+    local saint_dir
+    
+    # Handle PROJECT_PATH being relative (like ".")
+    if [[ "${PROJECT_PATH}" == "." ]]; then
+        saint_dir="$current_dir"
+    else
+        saint_dir=$(realpath "${PROJECT_PATH}" 2>/dev/null || echo "${PROJECT_PATH}")
+    fi
     
     # Check if we're in the Saint installation directory
     if [[ "$current_dir" != "$saint_dir" ]]; then
@@ -151,12 +158,14 @@ saint_version_tag() {
     fi
     
     # Check if working directory is clean (no uncommitted changes)
+    saint_msg_status "debug" "Checking working directory status..."
     if ! git diff-index --quiet HEAD --; then
         saint_msg_status "error" "Working directory has uncommitted changes"
         saint_msg_status "info" "Commit or stash changes before creating tag"
         saint_msg_status "info" "Use 'git status' to see changes"
         return 1
     fi
+    saint_msg_status "debug" "Working directory is clean"
     
     # Check if tag already exists
     if git tag -l "v${current_version}" | grep -q "v${current_version}"; then
