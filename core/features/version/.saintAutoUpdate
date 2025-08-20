@@ -265,10 +265,26 @@ saint_download_update() {
     local temp_dir="/tmp/saint_update_$$"
     local archive_url="${SAINT_GITHUB_ARCHIVE}/v${version}.tar.gz"
     
+    # Validate version parameter
+    if [ -z "$version" ] || ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        saint_msg_status "error" "Invalid version format: $version"
+        return 1
+    fi
+    
     saint_msg_status "info" "Downloading Saint v${version}..."
     
-    # Create temporary directory
-    mkdir -p "$temp_dir"
+    # Create temporary directory safely
+    if ! mkdir -p "$temp_dir" 2>/dev/null; then
+        saint_msg_status "error" "Failed to create temporary directory: $temp_dir"
+        return 1
+    fi
+    
+    # Validate temp directory was created and is safe
+    if [ ! -d "$temp_dir" ] || [[ "$temp_dir" != /tmp/saint_update_* ]]; then
+        saint_msg_status "error" "Invalid temporary directory path: $temp_dir"
+        return 1
+    fi
+    
     cd "$temp_dir"
     
     # Download and extract
@@ -281,25 +297,59 @@ saint_download_update() {
         return 1
     fi
     
+    # Validate downloaded file
     if [ ! -f "saint-${version}.tar.gz" ]; then
         saint_msg_status "error" "Failed to download update"
+        cd "$original_dir" 2>/dev/null || cd "$HOME"
+        rm -rf "$temp_dir" 2>/dev/null
+        return 1
+    fi
+    
+    # Validate file size (should be reasonable)
+    local file_size=$(stat -f%z "saint-${version}.tar.gz" 2>/dev/null || stat -c%s "saint-${version}.tar.gz" 2>/dev/null || echo "0")
+    if [ "$file_size" -lt 1000 ]; then  # Less than 1KB is suspicious
+        saint_msg_status "error" "Downloaded file is too small ($file_size bytes), may be corrupted"
+        cd "$original_dir" 2>/dev/null || cd "$HOME"
+        rm -rf "$temp_dir" 2>/dev/null
         return 1
     fi
     
     # Extract archive
-    tar -xzf "saint-${version}.tar.gz" || {
+    if ! tar -xzf "saint-${version}.tar.gz"; then
         saint_msg_status "error" "Failed to extract update"
+        cd "$original_dir" 2>/dev/null || cd "$HOME"
+        rm -rf "$temp_dir" 2>/dev/null
         return 1
-    }
+    fi
     
-    # Find the extracted directory
-    local extracted_dir=$(ls -d saint-* | head -1)
-    if [ -z "$extracted_dir" ]; then
-        saint_msg_status "error" "Failed to find extracted files"
+    # Find the extracted directory safely
+    local extracted_dir=""
+    for dir in saint-*; do
+        if [ -d "$dir" ] && [[ "$dir" == saint-* ]]; then
+            extracted_dir="$dir"
+            break
+        fi
+    done
+    
+    if [ -z "$extracted_dir" ] || [ ! -d "$extracted_dir" ]; then
+        saint_msg_status "error" "Failed to find extracted files or invalid directory structure"
+        cd "$original_dir" 2>/dev/null || cd "$HOME"
+        rm -rf "$temp_dir" 2>/dev/null
+        return 1
+    fi
+    
+    # Validate extracted directory contains expected files
+    if [ ! -f "${extracted_dir}/.saint" ] || [ ! -d "${extracted_dir}/core" ]; then
+        saint_msg_status "error" "Extracted directory does not contain valid Saint installation"
+        cd "$original_dir" 2>/dev/null || cd "$HOME"
+        rm -rf "$temp_dir" 2>/dev/null
         return 1
     fi
     
     saint_msg_status "info" "Installing update..."
+    
+    # Store current directory to return later
+    local original_dir=$(pwd)
     
     # Backup current installation
     local backup_dir="${PROJECT_PATH}_backup_$(date +%Y%m%d_%H%M%S)"
@@ -317,9 +367,13 @@ saint_download_update() {
         cp -r "${backup_dir}/saint_temp" "${PROJECT_PATH}/"
     fi
     
-    # Clean up
-    cd /
-    rm -rf "$temp_dir"
+    # Return to original directory
+    cd "$original_dir"
+    
+    # Clean up temp directory safely
+    if [ -d "$temp_dir" ] && [[ "$temp_dir" == /tmp/saint_update_* ]]; then
+        rm -rf "$temp_dir"
+    fi
     
     saint_msg_status "success" "Saint updated to v${version} successfully!"
     saint_msg_status "info" "Backup saved to: ${backup_dir}"
@@ -340,11 +394,21 @@ saint_download_update() {
 
 # Reload Saint in current shell
 saint_reload_saint() {
-    local saint_file="${HOME}/.saint"
+    local saint_file=""
     
-    # Check if .saint exists in home directory
-    if [ ! -f "$saint_file" ]; then
-        saint_debug "No .saint file found in home directory"
+    # Try to find .saint file safely
+    if [ -f "${HOME}/.saint" ]; then
+        saint_file="${HOME}/.saint"
+    elif [ -f "${PROJECT_PATH}/.saint" ]; then
+        saint_file="${PROJECT_PATH}/.saint"
+    else
+        saint_debug "No .saint file found"
+        return 1
+    fi
+    
+    # Validate the file is safe to source
+    if [ ! -r "$saint_file" ] || [ ! -f "$saint_file" ]; then
+        saint_debug "Saint file is not readable or not a regular file"
         return 1
     fi
     
