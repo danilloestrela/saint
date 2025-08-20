@@ -16,6 +16,8 @@ saint_version() {
 
 # Check if we're in the Saint repository
 saint_check_saint_repo() {
+    saint_msg_status "debug" "saint_check_saint_repo called"
+    
     # Get absolute paths for comparison
     local current_dir=$(pwd)
     local saint_dir
@@ -27,6 +29,9 @@ saint_check_saint_repo() {
         saint_dir=$(realpath "${PROJECT_PATH}" 2>/dev/null || echo "${PROJECT_PATH}")
     fi
     
+    saint_msg_status "debug" "Current dir: $current_dir"
+    saint_msg_status "debug" "Saint dir: $saint_dir"
+    
     # Check if we're in the Saint installation directory
     if [[ "$current_dir" != "$saint_dir" ]]; then
         saint_msg_status "error" "Version commands can only be run from the Saint repository"
@@ -34,6 +39,8 @@ saint_check_saint_repo() {
         saint_msg_status "info" "Saint repository: $saint_dir"
         return 1
     fi
+    
+    saint_msg_status "debug" "Directory check passed"
     
     # Check if this is actually the Saint repository
     if [[ ! -f "${PROJECT_PATH}/.saint" ]] || [[ ! -d "${PROJECT_PATH}/core" ]]; then
@@ -43,6 +50,7 @@ saint_check_saint_repo() {
         return 1
     fi
     
+    saint_msg_status "debug" "Repository check passed"
     return 0
 }
 
