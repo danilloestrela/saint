@@ -522,8 +522,16 @@ saint_update_commands() {
             saint_check_for_updates
             ;;
         "auto")
+            saint_msg_status "info" "Checking for updates..."
             local latest_version=$(saint_get_latest_version)
             if [ -n "$latest_version" ]; then
+                # Check if update is actually needed
+                if [ "${SAINT_VERSION}" = "$latest_version" ]; then
+                    saint_msg_status "info" "Already up to date! Current version: ${SAINT_VERSION}"
+                    saint_msg_status "info" "No update needed."
+                    return 0
+                fi
+                
                 # Double-check: prevent downgrade
                 if saint_is_version_newer "${SAINT_VERSION}" "$latest_version"; then
                     saint_msg_status "error" "ABORTED: This would be a downgrade!"
@@ -531,6 +539,8 @@ saint_update_commands() {
                     saint_msg_status "info" "Use 'saint update force $latest_version' if you really want to downgrade"
                     return 1
                 fi
+                
+                saint_msg_status "info" "Update available: ${SAINT_VERSION} → ${latest_version}"
                 saint_download_update "$latest_version"
             else
                 saint_msg_status "error" "Could not determine latest version"
