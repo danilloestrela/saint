@@ -417,8 +417,9 @@ saint_update_all_commands() {
         return 1
     }
     
-    # Update main commands template
-    if saint_sync_main_commands_safe; then
+    # Use existing functions instead of duplicating code
+    saint_debug "Updating main commands template..."
+    if saint_sync_main_commands; then
         saint_debug "Main commands template synced"
     else
         saint_debug "Failed to sync main commands template"
@@ -426,8 +427,8 @@ saint_update_all_commands() {
         return 1
     fi
     
-    # Update project commands
-    if saint_update_project_commands_safe; then
+    saint_debug "Updating project commands..."
+    if saint_update_project_commands; then
         saint_debug "Project commands updated"
     else
         saint_debug "Failed to update project commands"
@@ -435,8 +436,8 @@ saint_update_all_commands() {
         return 1
     fi
     
-    # Rebuild help system
-    if saint_rebuild_help_safe; then
+    saint_debug "Rebuilding help system..."
+    if saint_rebuild_help; then
         saint_debug "Help system rebuilt"
     else
         saint_debug "Failed to rebuild help system"
@@ -448,75 +449,6 @@ saint_update_all_commands() {
     cd "$original_dir"
     
     saint_debug "All commands updated successfully"
-    return 0
-}
-
-# Safe version of sync main commands
-saint_sync_main_commands_safe() {
-    local templatePath="${PROJECT_PATH}/templates/saint_temps/.saintMainCommands.txt"
-    local currentFile="${PROJECT_PATH}/saint_temp/.saintMainCommands"
-    
-    if [ ! -f "$templatePath" ]; then
-        saint_debug "Template file not found: $templatePath"
-        return 1
-    fi
-    
-    if [ ! -f "$currentFile" ]; then
-        saint_debug "Current commands file not found: $currentFile"
-        return 1
-    fi
-    
-    # Force sync template
-    cp "$templatePath" "$currentFile"
-    saint_debug "Main commands template synced from template"
-    return 0
-}
-
-# Safe version of update project commands
-saint_update_project_commands_safe() {
-    # Clear commands between BEGIN and END safely
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' "${PROJECT_PATH}/saint_temp/.saintMainCommands"
-    else
-        sed -i '/#BEGIN-MAINCOMMANDS/,/#END-MAINCOMMANDS/{//!d;}' "${PROJECT_PATH}/saint_temp/.saintMainCommands"
-    fi
-    
-    # Load project commands
-    if [ -d "${PROJECT_PATH}/projects" ]; then
-        for project in "${PROJECT_PATH}/projects"/*; do
-            if [ -d "$project" ]; then
-                local projName=$(basename "$project")
-                if [ -f "${project}/.${projName}" ]; then
-                    echo "${projName}_help" >> "${PROJECT_PATH}/saint_temp/.saintHelpCommands"
-                fi
-            fi
-        done
-    fi
-    
-    saint_debug "Project commands updated successfully"
-    return 0
-}
-
-# Safe version of rebuild help
-saint_rebuild_help_safe() {
-    local helpFile="${PROJECT_PATH}/saint_temp/.saintHelpCommands"
-    
-    # Clear existing help commands
-    : > "$helpFile"
-    
-    # Add help commands for existing projects
-    if [ -d "${PROJECT_PATH}/projects" ]; then
-        for project in "${PROJECT_PATH}/projects"/*; do
-            if [ -d "$project" ]; then
-                local projName=$(basename "$project")
-                if [ -f "${project}/.${projName}" ]; then
-                    echo "${projName}_help" >> "$helpFile"
-                fi
-            fi
-        done
-    fi
-    
-    saint_debug "Help system rebuilt successfully"
     return 0
 }
 
