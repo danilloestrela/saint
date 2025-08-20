@@ -362,19 +362,83 @@ saint_download_update() {
     
     # Create backup directory first
     if ! mkdir -p "$backup_dir"; then
-        saint_msg_status "error" "Failed to create backup directory"
+        saint_msg_status "error" "Failed to create backup directory: $backup_dir"
         cd "$original_dir" 2>/dev/null || cd "$HOME"
         rm -rf "$temp_dir" 2>/dev/null
         return 1
     fi
     
-    # Copy files individually to avoid copying directory into itself
-    if ! cp -r "${PROJECT_PATH}/"* "$backup_dir/" 2>/dev/null; then
-        saint_msg_status "error" "Failed to create backup"
-        cd "$original_dir" 2>/dev/null || cd "$HOME"
-        rm -rf "$temp_dir" 2>/dev/null
-        rm -rf "$backup_dir" 2>/dev/null
-        return 1
+    saint_debug "Backup directory created: $backup_dir"
+    
+    # Try multiple backup strategies for WSL compatibility
+    local backup_success=false
+    
+    # Strategy 1: Use rsync if available (most reliable)
+    if command -v rsync &> /dev/null; then
+        saint_debug "Attempting backup with rsync..."
+        if rsync -av --exclude='.git' --exclude='backup' "${PROJECT_PATH}/" "$backup_dir/" 2>/dev/null; then
+            backup_success=true
+            saint_debug "Backup successful with rsync"
+        else
+            saint_debug "rsync backup failed"
+        fi
+    fi
+    
+    # Strategy 2: Use cp with find (fallback)
+    if [ "$backup_success" = false ]; then
+        saint_debug "Attempting backup with cp + find..."
+        if find "${PROJECT_PATH}" -maxdepth 1 -mindepth 1 -not -name '.git' -not -name 'backup' -exec cp -r {} "$backup_dir/" \; 2>/dev/null; then
+            backup_success=true
+            saint_debug "Backup successful with cp + find"
+        else
+            saint_debug "cp + find backup failed"
+        fi
+    fi
+    
+    # Strategy 3: Manual file-by-file copy (last resort)
+    if [ "$backup_success" = false ]; then
+        saint_debug "Attempting manual file-by-file backup..."
+        local copy_success=true
+        
+        # Copy core directories and files manually
+        for item in "${PROJECT_PATH}"/*; do
+            if [ -e "$item" ] && [[ "$(basename "$item")" != ".git" ]] && [[ "$(basename "$item")" != "backup" ]]; then
+                if ! cp -r "$item" "$backup_dir/" 2>/dev/null; then
+                    saint_debug "Failed to copy: $item"
+                    copy_success=false
+                    break
+                fi
+            fi
+        done
+        
+        if [ "$copy_success" = true ]; then
+            backup_success=true
+            saint_debug "Manual backup successful"
+        fi
+    fi
+    
+    # Check if any backup strategy worked
+    if [ "$backup_success" = false ]; then
+        saint_msg_status "error" "All backup strategies failed"
+        saint_msg_status "info" "This might be due to WSL file system issues or permissions"
+        saint_msg_status "info" "Trying to continue without backup (not recommended)..."
+        
+        # Ask user if they want to continue without backup
+        local continue_without_backup
+        saint_read continue_without_backup "Continue without backup? (y/N): "
+        if [[ "$continue_without_backup" =~ ^[Yy]$ ]]; then
+            saint_msg_status "warning" "Proceeding without backup - this is not recommended!"
+            # Remove the failed backup directory
+            rm -rf "$backup_dir" 2>/dev/null
+        else
+            saint_msg_status "info" "Update cancelled by user"
+            cd "$original_dir" 2>/dev/null || cd "$HOME"
+            rm -rf "$temp_dir" 2>/dev/null
+            rm -rf "$backup_dir" 2>/dev/null
+            return 1
+        fi
+    else
+        saint_debug "Backup completed successfully"
     fi
     
     # Copy new files (excluding user-specific directories and Git metadata)
@@ -391,17 +455,17 @@ saint_download_update() {
         cp -r "${extracted_dir}/"* "${PROJECT_PATH}/"
     fi
     
-    # Preserve user projects and configuration
-    if [ -d "${backup_dir}/projects" ]; then
+    # Preserve user projects and configuration (only if backup exists)
+    if [ "$backup_success" = true ] && [ -d "${backup_dir}/projects" ]; then
         cp -r "${backup_dir}/projects" "${PROJECT_PATH}/"
     fi
     
-    if [ -d "${backup_dir}/saint_temp" ]; then
+    if [ "$backup_success" = true ] && [ -d "${backup_dir}/saint_temp" ]; then
         cp -r "${backup_dir}/saint_temp" "${PROJECT_PATH}/"
     fi
     
-    # Preserve Git metadata to avoid showing files as modified
-    if [ -d "${backup_dir}/.git" ]; then
+    # Preserve Git metadata to avoid showing files as modified (only if backup exists)
+    if [ "$backup_success" = true ] && [ -d "${backup_dir}/.git" ]; then
         # Use sudo if needed for Git objects
         if ! cp -r "${backup_dir}/.git" "${PROJECT_PATH}/" 2>/dev/null; then
             saint_msg_status "warning" "Failed to preserve Git metadata (permission issue)"
@@ -432,7 +496,12 @@ saint_download_update() {
     fi
     
     saint_msg_status "success" "Saint updated to v${version} successfully!"
-    saint_msg_status "info" "Backup saved to: ${backup_dir}"
+    if [ "$backup_success" = true ]; then
+        saint_msg_status "info" "Backup saved to: ${backup_dir}"
+    else
+        saint_msg_status "warning" "Update completed without backup (WSL compatibility issue)"
+        saint_msg_status "info" "Your projects and configuration are preserved, but no backup was created"
+    fi
     echo ""
     echo "🔄 Reloading Saint and updating commands automatically..."
     echo ""
