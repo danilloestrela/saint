@@ -359,7 +359,23 @@ saint_download_update() {
     
     # Backup current installation to protected backup folder
     local backup_dir="${backup_base_dir}/saint_backup_$(date +%Y%m%d_%H%M%S)"
-    cp -r "${PROJECT_PATH}" "$backup_dir"
+    
+    # Create backup directory first
+    if ! mkdir -p "$backup_dir"; then
+        saint_msg_status "error" "Failed to create backup directory"
+        cd "$original_dir" 2>/dev/null || cd "$HOME"
+        rm -rf "$temp_dir" 2>/dev/null
+        return 1
+    fi
+    
+    # Copy files individually to avoid copying directory into itself
+    if ! cp -r "${PROJECT_PATH}/"* "$backup_dir/" 2>/dev/null; then
+        saint_msg_status "error" "Failed to create backup"
+        cd "$original_dir" 2>/dev/null || cd "$HOME"
+        rm -rf "$temp_dir" 2>/dev/null
+        rm -rf "$backup_dir" 2>/dev/null
+        return 1
+    fi
     
     # Copy new files (excluding user-specific directories and Git metadata)
     # Use rsync if available for better control, otherwise use cp with exclusions
@@ -386,16 +402,25 @@ saint_download_update() {
     
     # Preserve Git metadata to avoid showing files as modified
     if [ -d "${backup_dir}/.git" ]; then
-        cp -r "${backup_dir}/.git" "${PROJECT_PATH}/"
+        # Use sudo if needed for Git objects
+        if ! cp -r "${backup_dir}/.git" "${PROJECT_PATH}/" 2>/dev/null; then
+            saint_msg_status "warning" "Failed to preserve Git metadata (permission issue)"
+            saint_msg_status "info" "Git status may show files as modified after update"
+        fi
     fi
     
     # Reset Git state to avoid showing files as modified
     cd "${PROJECT_PATH}"
     if [ -d ".git" ]; then
         # Reset any changes that might have been detected
-        git reset --hard HEAD 2>/dev/null || true
+        if ! git reset --hard HEAD 2>/dev/null; then
+            saint_msg_status "warning" "Git reset failed (permission issue)"
+        fi
+        
         # Clean untracked files (but preserve user directories)
-        git clean -fd --exclude=projects --exclude=saint_temp --exclude=backup 2>/dev/null || true
+        if ! git clean -fd --exclude=projects --exclude=saint_temp --exclude=backup 2>/dev/null; then
+            saint_msg_status "warning" "Git clean failed (permission issue)"
+        fi
     fi
     
     # Return to original directory
@@ -442,41 +467,27 @@ saint_update_all_commands() {
         return 1
     fi
     
-    cd "${PROJECT_PATH}" || {
-        saint_debug "Failed to navigate to PROJECT_PATH: ${PROJECT_PATH}"
-        return 1
-    }
+    # Store the target directory
+    local target_dir="${PROJECT_PATH}"
     
     # Use existing functions instead of duplicating code
     saint_debug "Updating main commands template..."
-    if saint_sync_main_commands; then
-        saint_debug "Main commands template synced"
-    else
+    if ! (cd "$target_dir" && saint_sync_main_commands); then
         saint_debug "Failed to sync main commands template"
-        cd "$original_dir"
         return 1
     fi
     
     saint_debug "Updating project commands..."
-    if saint_update_project_commands; then
-        saint_debug "Project commands updated"
-    else
+    if ! (cd "$target_dir" && saint_update_project_commands); then
         saint_debug "Failed to update project commands"
-        cd "$original_dir"
         return 1
     fi
     
     saint_debug "Rebuilding help system..."
-    if saint_rebuild_help; then
-        saint_debug "Help system rebuilt"
-    else
+    if ! (cd "$target_dir" && saint_rebuild_help); then
         saint_debug "Failed to rebuild help system"
-        cd "$original_dir"
         return 1
     fi
-    
-    # Return to original directory
-    cd "$original_dir"
     
     saint_debug "All commands updated successfully"
     return 0
