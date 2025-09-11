@@ -1,0 +1,174 @@
+# =============================================================================
+# NODE VERSION MANAGEMENT HELPERS
+# =============================================================================
+# This module provides a complete Node.js version management system using nvm
+# and package.json engines configuration. The main entry point is
+# saint_handle_nvmrc() which orchestrates the entire workflow.
+
+# =============================================================================
+# CORE VERSION DETECTION FUNCTIONS
+# =============================================================================
+
+# Core function to read .nvmrc version
+# Reads the Node.js version from .nvmrc file in the current directory
+# Returns: Version string if found, empty string if not found
+# Side effects: Displays status messages to stderr
+saint_cd_check_nvmrc() {
+    local directoryPath=$(pwd)
+    if [ -f "$directoryPath/.nvmrc" ]; then
+        saint_msg_status "info" "Found .nvmrc file in ${directoryPath}" >&2
+        local required_version=$(cat "$directoryPath/.nvmrc" | tr -d '\n' | tr -d '\r')
+        saint_msg_status "info" "Required Node.js version: ${required_version}" >&2
+        echo "$required_version"
+    else
+        saint_msg_status "info" "No .nvmrc file found in ${directoryPath}" >&2
+        echo ""
+    fi
+}
+
+# Generic function to check if nvm has a specific version
+# Checks if the specified Node.js version is already installed in nvm
+# Parameters: $1 - Node.js version to check (without 'v' prefix)
+# Returns: 0 if version exists, 1 if not found
+saint_nvm_has_version() {
+    local version=$1
+    nvm list | grep -q "v${version}"
+}
+
+# =============================================================================
+# NODE.JS INSTALLATION FUNCTIONS
+# =============================================================================
+
+# Generic function to install Node.js version with nvm
+# Installs the specified Node.js version using nvm
+# Parameters: $1 - Node.js version to install
+# Side effects: Installs Node.js version, displays status messages
+saint_nvm_install_version() {
+    local version=$1
+    saint_msg_status "info" "Installing Node.js version ${version}..."
+    nvm install "${version}"
+}
+
+# =============================================================================
+# NPM VERSION MANAGEMENT FUNCTIONS
+# =============================================================================
+
+# Generic function to update npm version
+# Updates npm to the specified version globally
+# Parameters: $1 - npm version to install (empty string = no update)
+# Side effects: Updates global npm version, displays status messages
+saint_npm_update_version() {
+    local npm_version=$1
+
+    if [ -n "$npm_version" ]; then
+        saint_msg_status "info" "Updating npm to version ${npm_version}..."
+        npm install -g npm@${npm_version}
+    fi
+}
+
+# =============================================================================
+# PACKAGE.JSON PARSING FUNCTIONS
+# =============================================================================
+
+# Generic function to extract Node.js version from package.json engines
+# Extracts Node.js version from package.json engines field
+# Returns: Node.js version string if found, empty string if not found
+# Supports: engines.node field in package.json
+saint_get_node_version_from_package() {
+    local directoryPath=$(pwd)
+    local package_json="${directoryPath}/package.json"
+
+    if [ -f "$package_json" ]; then
+        # Try using jq if available (more reliable)
+        if command -v jq >/dev/null 2>&1; then
+            local node_version=$(jq -r '.engines.node // empty' "$package_json" 2>/dev/null)
+            echo "$node_version"
+        else
+            # Fallback to simpler regex
+            local node_version=$(grep -o '"node"[[:space:]]*:[[:space:]]*"[^"]*"' "$package_json" | cut -d'"' -f4)
+            echo "$node_version"
+        fi
+    else
+        echo ""
+    fi
+}
+
+# Generic function to extract npm version from package.json
+# Extracts npm version from package.json engines field with fallback support
+# Returns: npm version string if found, empty string if not found
+# Supports: engines.npm field (preferred) and legacy npm field
+saint_get_npm_version() {
+    local directoryPath=$(pwd)
+    local package_json="${directoryPath}/package.json"
+
+    if [ -f "$package_json" ]; then
+        local npm_version=""
+
+        # Try using jq if available (more reliable)
+        if command -v jq >/dev/null 2>&1; then
+            npm_version=$(jq -r '.engines.npm // empty' "$package_json" 2>/dev/null)
+        fi
+
+        # Fallback to simpler regex if jq not available or no engines.npm found
+        if [ -z "$npm_version" ]; then
+            # Try engines format first (simplified regex)
+            npm_version=$(grep -o '"npm"[[:space:]]*:[[:space:]]*"[^"]*"' "$package_json" | cut -d'"' -f4)
+
+            # If not found in engines, try the old format
+            if [ -z "$npm_version" ]; then
+                npm_version=$(grep -o '"npm": "[^"]*"' "$package_json" | cut -d'"' -f4)
+            fi
+        fi
+
+        echo "$npm_version"
+    else
+        echo ""
+    fi
+}
+
+# =============================================================================
+# MAIN ORCHESTRATION FUNCTION
+# =============================================================================
+
+# High-level function to handle complete nvmrc workflow
+# This is the main entry point for Node.js version management
+#
+# Workflow:
+# 1. Check if .nvmrc file exists in current directory
+# 2. If it exists, get the required version from .nvmrc
+# 3. If no .nvmrc file exists, use the default version provided
+# 4. Check if the required version is already installed in nvm
+# 5. If not installed, install the required Node.js version
+# 6. Update npm to version specified in package.json (if any)
+# 7. Switch to the required Node.js version
+#
+# Parameters: $1 - default_version (fallback version if no .nvmrc found)
+# Side effects: Installs Node.js/npm versions, switches Node.js version
+# Dependencies: Requires nvm to be installed and available
+saint_handle_nvmrc() {
+    local default_version=$1
+    local directoryPath=$(pwd)
+
+    # Get required version from .nvmrc
+    local required_version=$(saint_cd_check_nvmrc)
+
+    # Use default version if no .nvmrc found
+    if [ -z "$required_version" ]; then
+        required_version="$default_version"
+        saint_msg_status "info" "Using default version: ${required_version}"
+    fi
+
+    # Check if version is already installed
+    if saint_nvm_has_version "$required_version"; then
+        saint_msg_status "success" "Node.js version ${required_version} is already installed"
+    else
+        saint_nvm_install_version "$required_version"
+
+        # Update npm if package.json specifies a version
+        local npm_version=$(saint_get_npm_version)
+        saint_npm_update_version "$npm_version"
+    fi
+
+    # Switch to the required version
+    nvm use "${required_version}"
+}

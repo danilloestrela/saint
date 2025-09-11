@@ -23,3 +23,5 @@ saint_cd_open_code () {
         saint_msg_status "error" "${RED}$directoryPath${NC} :: This path does not exist or there was an error."
     fi
 };
+
+source "${PROJECT_PATH}/core/features/helpers/saint_cd_helpers/.saintCdNvmrcHelpers"
