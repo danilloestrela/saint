@@ -8,6 +8,10 @@ saint_create_project_from_template() {
   local fileNameWithPath="${pDir}/${projectFileOutput}"
   local projNameUppercased=$(echo "$newProjName" | tr '[:lower:]' '[:upper:]')
 
+  # Convert dashes to underscores for bash identifiers
+  local projNameForBash=$(echo "$newProjName" | sed 's/-/_/g')
+  local projNameUppercasedForBash=$(echo "$projNameUppercased" | sed 's/-/_/g')
+
   # Template Path
   local templatePath="${PROJECT_PATH}/templates/single_project/${templateTxtName}"
   if [ ! -f "$templatePath" ]; then
@@ -19,11 +23,13 @@ saint_create_project_from_template() {
 
   # Overwriting variables in the template
   templateContent=$(echo "$templateContent" | sed "s|\${newProjName}|${newProjName}|g")
-  templateContent=$(echo "$templateContent" | sed "s|\${projNameUppercased}|${projNameUppercased}|g")
+  templateContent=$(echo "$templateContent" | sed "s|\${projNameUppercased}|${projNameUppercasedForBash}|g")
+  templateContent=$(echo "$templateContent" | sed "s|\${newProjNameForBash}|${projNameForBash}|g")
+  templateContent=$(echo "$templateContent" | sed "s|\${projNameUppercasedForBash}|${projNameUppercasedForBash}|g")
 
   if [ $# -gt 3 ]; then
     # Skipping the first 3 arguments
-    shift 3 
+    shift 3
     for var in "$@"; do
       # Checking if we have a var there
       if [[ $var == *"="* ]]; then
@@ -38,10 +44,10 @@ saint_create_project_from_template() {
   echo "$templateContent" > "$fileNameWithPath"
 
   # Checking if file was created
-  if [ -f "$fileNameWithPath" ]; then 
+  if [ -f "$fileNameWithPath" ]; then
     saint_msg "File ${YELLOW}${projectFileOutput}${NC} ${GREEN}created successfully${NC}."
     echo ""
-  else 
+  else
     saint_msg "File ${YELLOW}${projectFileOutput}${NC} ${RED}not created.${NC}"
   fi
 }
@@ -82,7 +88,7 @@ saint_create_project_alias_template() {
   local aliasNameChoice="aliasName=${aliasName}"
   saint_msg "Creating ${YELLOW}${newProjName}${NC} ${projectFileOutput} file template..."
   # Setting up .alias file
-  
+
   saint_create_project_from_template ${newProjName} ${fileTemplate} ${projectFileOutput} "${aliasNameChoice}"
   echo ""
 }

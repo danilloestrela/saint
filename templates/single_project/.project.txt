@@ -15,24 +15,24 @@ else
 fi
 
 # Function to update help by parsing comments
-${newProjName}_help() {
-    saint_project_help ${${projNameUppercased}_HELP_FILE} ${newProjName}
+${newProjNameForBash}_help() {
+    saint_project_help ${${projNameUppercasedForBash}_HELP_FILE} ${newProjName}
 }
 
 # Function to show help
-${newProjName}_update_help() {
-  saint_project_update_help ${${projNameUppercased}_HELP_FILE} ${${projNameUppercased}_SCRIPT_FILE} \
-  "${newProjName}_code" "${newProjName}_goto" "${newProjName}_run" "${newProjName}_install"
+${newProjNameForBash}_update_help() {
+  saint_project_update_help ${${projNameUppercasedForBash}_HELP_FILE} ${${projNameUppercasedForBash}_SCRIPT_FILE} \
+  "${newProjNameForBash}_code" "${newProjNameForBash}_goto" "${newProjNameForBash}_run" "${newProjNameForBash}_install"
 }
 
 # Template of run
 # "install" is usually used to install some project on your side. I use it mainly for js projects,
 # but you can addapt it for the one of your choice (go, rust, php, etc)
-${newProjName}_install() {
+${newProjNameForBash}_install() {
     lastCommand=$1
     case $2 in
         # Add cases here
-        # Ex: site) ${newProjName}_goto ${lastCommand} ${${newProjName}Variable} && npm i || cd - ;;
+        # Ex: site) ${newProjNameForBash}_goto ${lastCommand} ${${projNameForBash}Variable} && npm i || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
     esac
@@ -42,11 +42,11 @@ ${newProjName}_install() {
 # Template of run
 # "run" is usually used to run some project on your side. I use it mainly for js projects,
 # but you can addapt it for the one of your choice (go, rust, php, etc)
-${newProjName}_run() {
+${newProjNameForBash}_run() {
     lastCommand=$1
     case $2 in
         # Add cases here
-        # Ex: site) ${newProjName}_goto ${lastCommand} ${${newProjName}Variable} && npm run dev || cd - ;;
+        # Ex: site) ${newProjNameForBash}_goto ${lastCommand} ${${projNameForBash}Variable} && npm run dev || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
     esac
@@ -55,13 +55,13 @@ ${newProjName}_run() {
 
 # Template of code
 # "code" function is usually used to open your project on visual code. you can addapt it to your own IDE
-${newProjName}_code() {
+${newProjNameForBash}_code() {
     lastCommand=$1
     newProjName=$2
     case $newProjName in
         # Add cases here
-        # Ex: site) saint_cd_open_code ${${newProjName}Variable} || cd - ;;
-        root) saint_cd_open_code ${${newProjName}Path} || cd - ;;
+        # Ex: site) saint_cd_open_code ${${projNameForBash}Variable} || cd - ;;
+        root) saint_cd_open_code ${${projNameForBash}Path} || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
     esac
@@ -69,13 +69,13 @@ ${newProjName}_code() {
 
 
 # Template of goto
-${newProjName}_goto() {
+${newProjNameForBash}_goto() {
     lastCommand=$1
     newProjName=$2
     case $newProjName in
         # Add cases here
-        # Ex: site) saint_cd ${${newProjName}Variable} || cd - ;;
-        root) saint_cd ${${newProjName}Path} || cd - ;;
+        # Ex: site) saint_cd ${${projNameForBash}Variable} || cd - ;;
+        root) saint_cd ${${projNameForBash}Path} || cd - ;;
         "") saint_empty $lastCommand;;
         *) saint_invalid_command $lastCommand $newProjName;;
     esac

@@ -2,7 +2,7 @@
 # Specific variables to ${newProjName}
 # Here you can define env variables and other configs
 
-local ${newProjName}Path=${newProjPath}
+local ${newProjNameForBash}Path=${newProjPath}
 
 # Template of help
 local thisLocation=''
@@ -15,5 +15,5 @@ else
     thisLocation=$(dirname "${script_path}")
 fi
 
-${projNameUppercased}_HELP_FILE="${thisLocation}/.help_descriptions"
-${projNameUppercased}_SCRIPT_FILE="${thisLocation}/.${newProjName}"
+${projNameUppercasedForBash}_HELP_FILE="${thisLocation}/.help_descriptions"
+${projNameUppercasedForBash}_SCRIPT_FILE="${thisLocation}/.${newProjName}"

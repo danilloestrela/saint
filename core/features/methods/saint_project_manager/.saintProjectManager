@@ -68,7 +68,8 @@ saint_add_new_project() {
   echo -e ""
   printf "======================================== %-*s ========================================\n" 0 "UPDATING HELP ON ${newProjName}"
   echo -e ""
-  ${newProjName}_update_help
+  local projNameForBash=$(echo "$newProjName" | sed 's/-/_/g')
+  ${projNameForBash}_update_help
   echo -e ""
   printf "======================================== %-*s ========================================\n" 0 "END UPDATING HELP ON ${newProjName}"
   echo -e ""
