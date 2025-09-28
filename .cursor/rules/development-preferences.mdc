@@ -1,0 +1,79 @@
+---
+alwaysApply: true
+---
+
+# Development Preferences Rules
+
+## Project Structure
+- Inside `/projects/<project>`, you MAY reference the `<project>` name in methods.
+- Outside `/projects` and `/saint_temp`, you MUST NOT reference or import methods from projects. Project names MUST NEVER appear in GitHub-visible files.
+- Core functionality MUST be organized in the `/core/` directory structure.
+- The main entry point `.saint` MUST remain in the root directory.
+
+## Core Directory Organization
+- **core/helpers/** → Contains shared helper functions and utilities
+- **core/methods/** → Contains core system methods and managers
+- **core/variables/** → Contains central configuration and variables
+- **core/features/** → Contains feature modules (helpers & methods)
+- **core/.saintCustomAlias** → Global and custom aliases
+- **core/.saintProjects** → Project management and loading
+
+## System Requirements
+- The system MUST run on any Unix environment.
+- You MUST implement all logic in pure Bash, with no external libraries.
+- You MUST support both:
+  - Bash (no Oh My Zsh)
+  - Zsh with Oh My Zsh
+  - Pure Zsh
+- You MAY create bash-specific methods, but the default MUST work across all bash setups.
+- You MUST assume expertise in Linux, macOS, and Windows WSL2 environments.
+
+## Additional Enforcement Rules
+- Scripts MUST use `#!/usr/bin/env bash` as shebang.
+- Project names MUST NOT be logged or echoed outside `/projects/<project>` or `/saint_temp`.
+- Bash constructs MUST be POSIX-compatible when possible.
+- Scripts MUST be validated against macOS (Intel + Silicon), Linux (Ubuntu), and WSL2.
+
+## Core Structure Rules
+- All core functionality MUST be placed in the appropriate `/core/` subdirectory.
+- Source paths in `.saint` MUST use the new core structure (e.g., `${PROJECT_PATH}/core/helpers/.saintHelpers`).
+- When adding new core features, place them in the appropriate `/core/` subdirectory.
+- Maintain the separation between core functionality and user projects.
+- Keep the root directory clean with only `.saint` and essential directories. # Development Preferences Rules
+
+## Project Structure
+- Inside `/projects/<project>`, you MAY reference the `<project>` name in methods.
+- Outside `/projects` and `/saint_temp`, you MUST NOT reference or import methods from projects. Project names MUST NEVER appear in GitHub-visible files.
+- Core functionality MUST be organized in the `/core/` directory structure.
+- The main entry point `.saint` MUST remain in the root directory.
+
+## Core Directory Organization
+- **core/helpers/** → Contains shared helper functions and utilities
+- **core/methods/** → Contains core system methods and managers
+- **core/variables/** → Contains central configuration and variables
+- **core/features/** → Contains feature modules (helpers & methods)
+- **core/.saintCustomAlias** → Global and custom aliases
+- **core/.saintProjects** → Project management and loading
+
+## System Requirements
+- The system MUST run on any Unix environment.
+- You MUST implement all logic in pure Bash, with no external libraries.
+- You MUST support both:
+  - Bash (no Oh My Zsh)
+  - Zsh with Oh My Zsh
+  - Pure Zsh
+- You MAY create bash-specific methods, but the default MUST work across all bash setups.
+- You MUST assume expertise in Linux, macOS, and Windows WSL2 environments.
+
+## Additional Enforcement Rules
+- Scripts MUST use `#!/usr/bin/env bash` as shebang.
+- Project names MUST NOT be logged or echoed outside `/projects/<project>` or `/saint_temp`.
+- Bash constructs MUST be POSIX-compatible when possible.
+- Scripts MUST be validated against macOS (Intel + Silicon), Linux (Ubuntu), and WSL2.
+
+## Core Structure Rules
+- All core functionality MUST be placed in the appropriate `/core/` subdirectory.
+- Source paths in `.saint` MUST use the new core structure (e.g., `${PROJECT_PATH}/core/helpers/.saintHelpers`).
+- When adding new core features, place them in the appropriate `/core/` subdirectory.
+- Maintain the separation between core functionality and user projects.
+- Keep the root directory clean with only `.saint` and essential directories.
