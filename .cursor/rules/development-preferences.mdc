@@ -33,6 +33,7 @@ alwaysApply: true
 - Project names MUST NOT be logged or echoed outside `/projects/<project>` or `/saint_temp`.
 - Bash constructs MUST be POSIX-compatible when possible.
 - Scripts MUST be validated against macOS (Intel + Silicon), Linux (Ubuntu), and WSL2.
+- Code must always be written in English.
 
 ## Core Structure Rules
 - All core functionality MUST be placed in the appropriate `/core/` subdirectory.
