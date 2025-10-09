@@ -22,6 +22,11 @@ saint_create_project_from_template() {
   local templateContent=$(<"$templatePath")
 
   # Overwriting variables in the template
+  # First, handle nested variables by replacing the placeholder inside nested expressions
+  templateContent=$(echo "$templateContent" | sed "s|\\\${projNameForBash}Variable|${projNameForBash}Variable|g")
+  templateContent=$(echo "$templateContent" | sed "s|\\\${projNameForBash}Path|${projNameForBash}Path|g")
+
+  # Now do the basic substitutions
   templateContent=$(echo "$templateContent" | sed "s|\${newProjName}|${newProjName}|g")
   templateContent=$(echo "$templateContent" | sed "s|\${projNameUppercased}|${projNameUppercasedForBash}|g")
   templateContent=$(echo "$templateContent" | sed "s|\${newProjNameForBash}|${projNameForBash}|g")
